@@ -1,7 +1,7 @@
 """Use ACE as a self-improving memory for an OpenAI Agents SDK agent.
 
 Requires a real OpenAI API key (set OPENAI_API_KEY) and the extras:
-    pip install "agentic-context-engineering[all]"
+    pip install "ace-playbook[all]"
 
 The agent runs normally; after each task we feed natural execution feedback
 (no labels required) to ACE, which grows a playbook that is injected into the

@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agentic-context-engineering"
+name = "ace-playbook"
 version = "0.1.0"
 description = "ACE — Agentic Context Engineering: evolving, self-improving context playbooks for LLM agents. A faithful, framework-style implementation of the ICLR 2026 paper, with first-class OpenAI Agents SDK support."
 readme = "README.md"

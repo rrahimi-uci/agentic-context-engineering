@@ -81,7 +81,7 @@ class ACEAgent:
         except ImportError as exc:  # pragma: no cover
             raise ImportError(
                 "ACEAgent requires the OpenAI Agents SDK. Install with "
-                "`pip install agentic-context-engineering[agents]`."
+                "`pip install ace-playbook[agents]`."
             ) from exc
 
         self.ace = ace

@@ -111,7 +111,7 @@ instructions on every run; after each task you hand back feedback (a label *or*
 just natural execution signal) and ACE grows the playbook.
 
 ```bash
-pip install "agentic-context-engineering[all]"     # adds openai + openai-agents
+pip install "ace-playbook[all]"     # adds openai + openai-agents
 export OPENAI_API_KEY=sk-...
 ```
 

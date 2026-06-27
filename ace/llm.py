@@ -89,7 +89,7 @@ class OpenAILLM:
         except ImportError as exc:  # pragma: no cover - exercised only without extra
             raise ImportError(
                 "OpenAILLM requires the 'openai' package. Install with "
-                "`pip install agentic-context-engineering[openai]`."
+                "`pip install ace-playbook[openai]`."
             ) from exc
         self.model = model
         self.temperature = temperature
