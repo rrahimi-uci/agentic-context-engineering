@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite both this implementation and the original paper."
+title: "ACE — Agentic Context Engineering (implementation)"
+type: software
+authors:
+  - name: "ACE Framework Contributors"
+repository-code: "https://github.com/your-org/ace-framework"
+license: MIT
+keywords:
+  - large-language-models
+  - llm-agents
+  - context-engineering
+  - self-improving-agents
+  - openai-agents-sdk
+references:
+  - type: article
+    title: "Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models"
+    authors:
+      - family-names: Zhang
+        given-names: Qizheng
+      - family-names: Hu
+        given-names: Changran
+    year: 2026
+    url: "https://arxiv.org/abs/2510.04618"

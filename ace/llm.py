@@ -1,0 +1,152 @@
+"""LLM backends used by the Generator, Reflector, and Curator.
+
+ACE is model-agnostic. The framework only needs two operations from a backend:
+
+* ``complete(system, user)`` — return free-form text;
+* ``complete_json(system, user, schema_hint)`` — return a parsed JSON object.
+
+Two backends ship in the box:
+
+* :class:`OpenAILLM` — talks to the real OpenAI API (chat completions). Use this
+  for genuine benchmarks and production agents.
+* :class:`SimulatedLLM` — a deterministic, offline backend used by the test
+  suite and the bundled demos so that **everything runs with zero API keys and
+  is fully reproducible**. It is intentionally simple but faithfully exercises
+  the ACE control loop (generate → reflect → curate → merge).
+
+The simulated backend is wired to :mod:`ace.tasks`' teaching environment, where
+each question is associated with a hidden domain rule. This lets the demos show
+*real, measured* accuracy gains as ACE accumulates the right bullets — without
+pretending those numbers come from a frontier model.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+from typing import List, Optional, Protocol, runtime_checkable
+
+
+@runtime_checkable
+class LLM(Protocol):
+    """Minimal interface every backend must satisfy."""
+
+    def complete(self, system: str, user: str, **kwargs) -> str: ...
+
+    def complete_json(self, system: str, user: str, **kwargs) -> dict: ...
+
+
+def _extract_json(text: str) -> dict:
+    """Best-effort extraction of a JSON object from model output."""
+    text = text.strip()
+    # Strip ```json fences.
+    fence = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL)
+    if fence:
+        text = fence.group(1).strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+    # Fall back to the first balanced {...} block.
+    start = text.find("{")
+    if start != -1:
+        depth = 0
+        for i in range(start, len(text)):
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(text[start : i + 1])
+                    except json.JSONDecodeError:
+                        break
+    return {}
+
+
+class OpenAILLM:
+    """OpenAI Chat Completions backend.
+
+    Parameters
+    ----------
+    model:
+        Any chat model id (default ``gpt-4o-mini``). The paper uses the same
+        model for all three roles to isolate the benefit of context.
+    api_key:
+        Falls back to the ``OPENAI_API_KEY`` environment variable.
+    """
+
+    def __init__(
+        self,
+        model: str = "gpt-4o-mini",
+        api_key: Optional[str] = None,
+        temperature: float = 0.2,
+        base_url: Optional[str] = None,
+    ) -> None:
+        try:
+            from openai import OpenAI
+        except ImportError as exc:  # pragma: no cover - exercised only without extra
+            raise ImportError(
+                "OpenAILLM requires the 'openai' package. Install with "
+                "`pip install agentic-context-engineering[openai]`."
+            ) from exc
+        self.model = model
+        self.temperature = temperature
+        self._client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"), base_url=base_url)
+        # Lightweight usage accounting (tokens are summed across all calls).
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
+        self.num_calls = 0
+
+    def _chat(self, system: str, user: str, **kwargs) -> str:
+        resp = self._client.chat.completions.create(
+            model=self.model,
+            temperature=kwargs.get("temperature", self.temperature),
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+        )
+        self.num_calls += 1
+        if resp.usage:
+            self.prompt_tokens += resp.usage.prompt_tokens or 0
+            self.completion_tokens += resp.usage.completion_tokens or 0
+        return resp.choices[0].message.content or ""
+
+    def complete(self, system: str, user: str, **kwargs) -> str:
+        return self._chat(system, user, **kwargs)
+
+    def complete_json(self, system: str, user: str, **kwargs) -> dict:
+        system_json = system + "\n\nRespond with a single valid JSON object and nothing else."
+        return _extract_json(self._chat(system_json, user, **kwargs))
+
+
+class SimulatedLLM:
+    """Deterministic, offline backend backed by a teaching environment.
+
+    The simulated model behaves like a base LLM that *innately knows* a fraction
+    of the domain rules. For any other question it is correct only if the
+    relevant rule is present in the context (playbook) it is given. The Reflector
+    and Curator simulations extract and itemize those rules from feedback, so ACE
+    measurably improves over time. This is a simulation of the ACE *mechanism*,
+    not a substitute for real benchmarks.
+    """
+
+    def __init__(self, environment, seed: int = 0) -> None:
+        self.env = environment
+        self.seed = seed
+        self.num_calls = 0
+        self.prompt_tokens = 0
+        self.completion_tokens = 0
+
+    # The simulated roles are driven directly by ace.roles via these helpers,
+    # but we also expose the LLM protocol so the type checks and any custom
+    # prompting paths still work.
+    def complete(self, system: str, user: str, **kwargs) -> str:  # pragma: no cover
+        self.num_calls += 1
+        return ""
+
+    def complete_json(self, system: str, user: str, **kwargs) -> dict:  # pragma: no cover
+        self.num_calls += 1
+        return {}

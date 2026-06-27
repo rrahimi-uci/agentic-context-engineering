@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ACE — Agentic Context Engineering</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         margin: 0; background: #f8fafc; color: #0f172a; }
+  header { background: linear-gradient(135deg,#1e293b,#0f172a); color: #fff; padding: 32px 24px; }
+  header h1 { margin: 0 0 4px; font-size: 26px; }
+  header p { margin: 0; color: #94a3b8; }
+  main { max-width: 920px; margin: 0 auto; padding: 24px; }
+  .cards { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0 28px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 18px;
+          flex: 1 1 180px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .card h3 { margin: 0 0 6px; font-size: 14px; color: #475569; }
+  .big { font-size: 30px; font-weight: 700; color: #2563eb; }
+  .muted { color: #64748b; font-size: 12px; }
+  .chart { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin: 16px 0; }
+  h2 { margin-top: 32px; }
+  table.pb { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden;
+             font-size: 13px; border: 1px solid #e2e8f0; }
+  table.pb th, table.pb td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eef2f7; vertical-align: top; }
+  table.pb th { background: #f1f5f9; color: #475569; }
+  tr.collapse td { background: #fef2f2; color: #b91c1c; font-weight: 600; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #2563eb; }
+  footer { text-align: center; color: #94a3b8; padding: 24px; font-size: 12px; }
+  code { background:#0f172a; color:#e2e8f0; padding:2px 6px; border-radius:4px; }
+</style></head>
+<body>
+<header><h1>ACE — Agentic Context Engineering</h1><p>Context collapse: monolithic rewrite vs ACE incremental deltas</p></header>
+<main>
+  <div class="cards"><div class="card"><h3>ACE (incremental)</h3><div class="big">88.3%</div><div class="muted">accuracy · 60 graded</div><div class="muted">playbook: 7 bullets · ≈297 tok</div></div><div class="card"><h3>Monolithic rewrite</h3><div class="big">60.0%</div><div class="muted">accuracy · 60 graded</div><div class="muted">playbook: 3 bullets · ≈137 tok</div></div></div>
+  <div class="chart"><h2 style="margin-top:0">Accuracy over time (rolling window)</h2>
+    <svg viewBox="0 0 560 220" width="100%" style="max-width:560px"><line x1="36" y1="184" x2="524" y2="184" stroke="#cbd5e1"/><line x1="36" y1="36" x2="36" y2="184" stroke="#cbd5e1"/><text x="36" y="24" font-size="11" fill="#64748b">accuracy %</text><text x="30" y="40.0" font-size="10" fill="#94a3b8" text-anchor="end">100</text><text x="30" y="188.0" font-size="10" fill="#94a3b8" text-anchor="end">20</text><polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="36.0,36.0 44.3,128.5 52.5,97.7 60.8,128.5 69.1,110.0 77.4,147.0 85.6,147.0 93.9,184.0 102.2,184.0 110.4,184.0 118.7,147.0 127.0,147.0 135.3,110.0 143.5,73.0 151.8,73.0 160.1,73.0 168.3,36.0 176.6,36.0 184.9,36.0 193.2,36.0 201.4,36.0 209.7,36.0 218.0,36.0 226.2,36.0 234.5,36.0 242.8,36.0 251.1,36.0 259.3,36.0 267.6,36.0 275.9,36.0 284.1,36.0 292.4,36.0 300.7,36.0 308.9,36.0 317.2,36.0 325.5,36.0 333.8,36.0 342.0,36.0 350.3,36.0 358.6,36.0 366.8,36.0 375.1,36.0 383.4,36.0 391.7,36.0 399.9,36.0 408.2,36.0 416.5,36.0 424.7,36.0 433.0,36.0 441.3,36.0 449.6,36.0 457.8,36.0 466.1,36.0 474.4,36.0 482.6,36.0 490.9,36.0 499.2,36.0 507.5,36.0 515.7,36.0 524.0,36.0"/><circle cx="524.0" cy="36.0" r="3" fill="#2563eb"/><rect x="374" y="27" width="12" height="12" fill="#2563eb"/><text x="390" y="37" font-size="11" fill="#334155">ACE (incremental)</text><polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="36.0,36.0 44.3,128.5 52.5,97.7 60.8,128.5 69.1,110.0 77.4,147.0 85.6,147.0 93.9,184.0 102.2,184.0 110.4,184.0 118.7,147.0 127.0,147.0 135.3,110.0 143.5,73.0 151.8,73.0 160.1,73.0 168.3,36.0 176.6,36.0 184.9,73.0 193.2,73.0 201.4,110.0 209.7,147.0 218.0,147.0 226.2,147.0 234.5,147.0 242.8,110.0 251.1,73.0 259.3,73.0 267.6,36.0 275.9,36.0 284.1,73.0 292.4,110.0 300.7,147.0 308.9,184.0 317.2,184.0 325.5,184.0 333.8,147.0 342.0,110.0 350.3,73.0 358.6,73.0 366.8,73.0 375.1,73.0 383.4,73.0 391.7,110.0 399.9,147.0 408.2,110.0 416.5,147.0 424.7,147.0 433.0,110.0 441.3,73.0 449.6,73.0 457.8,36.0 466.1,36.0 474.4,36.0 482.6,73.0 490.9,110.0 499.2,147.0 507.5,147.0 515.7,184.0 524.0,147.0"/><circle cx="524.0" cy="147.0" r="3" fill="#dc2626"/><rect x="374" y="45" width="12" height="12" fill="#dc2626"/><text x="390" y="55" font-size="11" fill="#334155">Monolithic rewrite</text></svg></div>
+  <div class="chart"><h2 style="margin-top:0">Playbook size over time</h2>
+    <svg viewBox="0 0 560 220" width="100%" style="max-width:560px"><line x1="36" y1="184" x2="524" y2="184" stroke="#cbd5e1"/><line x1="36" y1="36" x2="36" y2="184" stroke="#cbd5e1"/><text x="36" y="24" font-size="11" fill="#64748b">bullets</text><text x="30" y="40.0" font-size="10" fill="#94a3b8" text-anchor="end">7</text><text x="30" y="188.0" font-size="10" fill="#94a3b8" text-anchor="end">0</text><polyline fill="none" stroke="#2563eb" stroke-width="2.5" points="36.0,184.0 44.3,162.9 52.5,162.9 60.8,141.7 69.1,141.7 77.4,120.6 85.6,99.4 93.9,78.3 102.2,57.1 110.4,57.1 118.7,57.1 127.0,36.0 135.3,36.0 143.5,36.0 151.8,36.0 160.1,36.0 168.3,36.0 176.6,36.0 184.9,36.0 193.2,36.0 201.4,36.0 209.7,36.0 218.0,36.0 226.2,36.0 234.5,36.0 242.8,36.0 251.1,36.0 259.3,36.0 267.6,36.0 275.9,36.0 284.1,36.0 292.4,36.0 300.7,36.0 308.9,36.0 317.2,36.0 325.5,36.0 333.8,36.0 342.0,36.0 350.3,36.0 358.6,36.0 366.8,36.0 375.1,36.0 383.4,36.0 391.7,36.0 399.9,36.0 408.2,36.0 416.5,36.0 424.7,36.0 433.0,36.0 441.3,36.0 449.6,36.0 457.8,36.0 466.1,36.0 474.4,36.0 482.6,36.0 490.9,36.0 499.2,36.0 507.5,36.0 515.7,36.0 524.0,36.0"/><circle cx="524.0" cy="36.0" r="3" fill="#2563eb"/><rect x="374" y="27" width="12" height="12" fill="#2563eb"/><text x="390" y="37" font-size="11" fill="#334155">ACE (incremental)</text><polyline fill="none" stroke="#dc2626" stroke-width="2.5" points="36.0,184.0 44.3,162.9 52.5,162.9 60.8,141.7 69.1,141.7 77.4,120.6 85.6,99.4 93.9,78.3 102.2,57.1 110.4,57.1 118.7,57.1 127.0,36.0 135.3,36.0 143.5,36.0 151.8,36.0 160.1,141.7 168.3,141.7 176.6,141.7 184.9,141.7 193.2,141.7 201.4,120.6 209.7,99.4 218.0,99.4 226.2,78.3 234.5,78.3 242.8,78.3 251.1,78.3 259.3,78.3 267.6,141.7 275.9,141.7 284.1,120.6 292.4,99.4 300.7,78.3 308.9,57.1 317.2,57.1 325.5,36.0 333.8,36.0 342.0,36.0 350.3,36.0 358.6,141.7 366.8,120.6 375.1,120.6 383.4,120.6 391.7,99.4 399.9,78.3 408.2,78.3 416.5,57.1 424.7,57.1 433.0,57.1 441.3,57.1 449.6,57.1 457.8,57.1 466.1,141.7 474.4,141.7 482.6,120.6 490.9,141.7 499.2,141.7 507.5,141.7 515.7,120.6 524.0,120.6"/><circle cx="524.0" cy="120.6" r="3" fill="#dc2626"/><rect x="374" y="45" width="12" height="12" fill="#dc2626"/><text x="390" y="55" font-size="11" fill="#334155">Monolithic rewrite</text></svg></div>
+  <h2>Adaptation Timeline</h2><table class='pb'><tr><th>run</th><th>step</th><th>ok</th><th>event</th><th>playbook size</th></tr><tr class=''><td>ACE (incremental)</td><td>2</td><td>✗</td><td>+1 bullet(s)</td><td>1</td></tr><tr class=''><td>ACE (incremental)</td><td>4</td><td>✗</td><td>+1 bullet(s)</td><td>2</td></tr><tr class=''><td>ACE (incremental)</td><td>6</td><td>✗</td><td>+1 bullet(s)</td><td>3</td></tr><tr class=''><td>ACE (incremental)</td><td>7</td><td>✗</td><td>+1 bullet(s)</td><td>4</td></tr><tr class=''><td>ACE (incremental)</td><td>8</td><td>✗</td><td>+1 bullet(s)</td><td>5</td></tr><tr class=''><td>ACE (incremental)</td><td>9</td><td>✗</td><td>+1 bullet(s)</td><td>6</td></tr><tr class=''><td>ACE (incremental)</td><td>12</td><td>✗</td><td>+1 bullet(s)</td><td>7</td></tr><tr class='collapse'><td>Monolithic rewrite</td><td>16</td><td>✓</td><td>CONTEXT COLLAPSE</td><td>2</td></tr><tr class='collapse'><td>Monolithic rewrite</td><td>19</td><td>✗</td><td>CONTEXT COLLAPSE</td><td>2</td></tr><tr class='collapse'><td>Monolithic rewrite</td><td>29</td><td>✓</td><td>CONTEXT COLLAPSE</td><td>2</td></tr><tr class='collapse'><td>Monolithic rewrite</td><td>40</td><td>✓</td><td>CONTEXT COLLAPSE</td><td>2</td></tr><tr class='collapse'><td>Monolithic rewrite</td><td>53</td><td>✓</td><td>CONTEXT COLLAPSE</td><td>2</td></tr><tr class='collapse'><td>Monolithic rewrite</td><td>56</td><td>✗</td><td>CONTEXT COLLAPSE</td><td>2</td></tr><tr class='collapse'><td>Monolithic rewrite</td><td>57</td><td>✗</td><td>CONTEXT COLLAPSE</td><td>2</td></tr></table>
+  <h2>Final Playbook</h2><table class='pb'><tr><th>id</th><th>section</th><th>content</th><th>score</th></tr><tr><td class='mono'>ctx-4dcb4932</td><td>domain_concepts</td><td>Escrow accounts for taxes and insurance are required when the LTV exceeds 80% on most conventional loans.</td><td>+4/-0</td></tr><tr><td class='mono'>ctx-7df33dd0</td><td>domain_concepts</td><td>For a 2-unit investment property with 4 financed properties, minimum required reserves are 12 months (not 2 or 6).</td><td>+4/-0</td></tr><tr><td class='mono'>ctx-f6441b24</td><td>domain_concepts</td><td>Combined LTV (CLTV) including subordinate financing generally cannot exceed 95% for a 1-unit primary residence purchase.</td><td>+4/-0</td></tr><tr><td class='mono'>ctx-70683d59</td><td>domain_concepts</td><td>For manually underwritten loans, the maximum total debt-to-income (DTI) ratio is generally 36%, extendable to 45% with strong compensating factors.</td><td>+4/-0</td></tr><tr><td class='mono'>ctx-50e896e8</td><td>domain_concepts</td><td>An appraisal waiver is not permitted on cash-out refinances; a full appraisal is required.</td><td>+4/-0</td></tr><tr><td class='mono'>ctx-0516fc4c</td><td>domain_concepts</td><td>Virtual currency must be converted to USD and deposited in a U.S. depository institution before closing, with documentation of conversion and source.</td><td>+4/-0</td></tr><tr><td class='mono'>ctx-81628e97</td><td>domain_concepts</td><td>Gift funds are allowed for the entire down payment on a primary residence; no minimum borrower contribution is required for a 1-unit primary residence.</td><td>+4/-0</td></tr></table>
+  <h2>Summary (JSON)</h2>
+  <pre style="background:#0f172a;color:#e2e8f0;padding:16px;border-radius:8px;overflow:auto">{
+  &quot;ACE (incremental)&quot;: {
+    &quot;steps&quot;: 60,
+    &quot;graded&quot;: 60,
+    &quot;accuracy&quot;: 88.33,
+    &quot;final_playbook_size&quot;: 7,
+    &quot;final_playbook_tokens&quot;: 297
+  },
+  &quot;Monolithic rewrite&quot;: {
+    &quot;steps&quot;: 60,
+    &quot;graded&quot;: 60,
+    &quot;accuracy&quot;: 60.0,
+    &quot;final_playbook_size&quot;: 3,
+    &quot;final_playbook_tokens&quot;: 137
+  }
+}</pre>
+</main>
+<footer>Generated by <code>ace.visualize</code> · Agentic Context Engineering</footer>
+</body></html>

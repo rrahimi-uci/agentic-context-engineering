@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentic-context-engineering"
+version = "0.1.0"
+description = "ACE — Agentic Context Engineering: evolving, self-improving context playbooks for LLM agents. A faithful, framework-style implementation of the ICLR 2026 paper, with first-class OpenAI Agents SDK support."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "ACE Framework Contributors" }]
+keywords = [
+  "llm", "agents", "context-engineering", "prompt-optimization",
+  "self-improving-agents", "openai", "openai-agents-sdk", "agent-memory",
+  "in-context-learning", "ace", "playbook", "rag", "reflexion", "gepa",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "numpy>=1.23",
+  "rich>=13.0",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=1.40"]
+agents = ["openai-agents>=0.0.1"]
+dev = ["pytest>=8.0", "python-dotenv>=1.0"]
+all = ["openai>=1.40", "openai-agents>=0.0.1", "python-dotenv>=1.0", "pytest>=8.0"]
+
+[project.urls]
+Homepage = "https://github.com/your-org/ace-framework"
+Repository = "https://github.com/your-org/ace-framework"
+Paper = "https://arxiv.org/abs/2510.04618"
+
+[project.scripts]
+ace = "ace.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ace*"]
+
+[tool.setuptools.package-data]
+ace = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
