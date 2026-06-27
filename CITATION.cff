@@ -4,7 +4,7 @@ title: "ACE — Agentic Context Engineering (implementation)"
 type: software
 authors:
   - name: "ACE Framework Contributors"
-repository-code: "https://github.com/your-org/ace-framework"
+repository-code: "https://github.com/rezarahimi/agentic-context-engineering"
 license: MIT
 keywords:
   - large-language-models
