@@ -6,7 +6,7 @@ of Agentic Context Engineering and welcomes improvements.
 ## Getting started
 
 ```bash
-git clone https://github.com/rezarahimi/agentic-context-engineering && cd agentic-context-engineering
+git clone https://github.com/rrahimi-uci/agentic-context-engineering && cd agentic-context-engineering
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 pytest

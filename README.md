@@ -8,12 +8,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-62%20passing-brightgreen.svg)](tests/)
 [![OpenAI Agents SDK](https://img.shields.io/badge/OpenAI-Agents%20SDK-black.svg)](https://openai.github.io/openai-agents-python/)
-[![Docs](https://img.shields.io/badge/docs-website-blue.svg)](https://rezarahimi.github.io/agentic-context-engineering/)
+[![Docs](https://img.shields.io/badge/docs-website-blue.svg)](https://rrahimi-uci.github.io/agentic-context-engineering/)
 [![Paper](https://img.shields.io/badge/paper-arXiv%3A2510.04618-b31b1b.svg)](https://arxiv.org/abs/2510.04618)
 
 **Stop re-prompting. Let your agent *write its own playbook* from experience.**
 
-📖 **[Documentation site](https://rezarahimi.github.io/agentic-context-engineering/)** · 📐 **[Architecture](https://rezarahimi.github.io/agentic-context-engineering/architecture.html)**
+📖 **[Documentation site](https://rrahimi-uci.github.io/agentic-context-engineering/)** · 📐 **[Architecture](https://rrahimi-uci.github.io/agentic-context-engineering/architecture.html)**
 
 [Quickstart](#-quickstart) · [Why ACE](#-why-ace) · [Use on your own task](#-use-it-on-your-own-task) · [OpenAI Agents SDK](#-use-it-with-the-openai-agents-sdk) · [How it works](#-how-it-works) · [Results](#-results) · [Architecture](ARCHITECTURE.md)
 
@@ -55,7 +55,7 @@ modular **Generator → Reflector → Curator** loop with **incremental delta up
 ## 🚀 Quickstart
 
 ```bash
-git clone https://github.com/rezarahimi/agentic-context-engineering && cd agentic-context-engineering
+git clone https://github.com/rrahimi-uci/agentic-context-engineering && cd agentic-context-engineering
 pip install -e .            # core library (numpy + rich only)
 ```
 
@@ -206,7 +206,7 @@ flowchart LR
     class PBO store;
 ```
 
-Full diagrams (roles, bullet lifecycle, grow-and-refine, feedback regimes, data model — 14 in total) live in **[ARCHITECTURE.md](ARCHITECTURE.md)** and on the **[docs site](https://rezarahimi.github.io/agentic-context-engineering/architecture.html)**.
+Full diagrams (roles, bullet lifecycle, grow-and-refine, feedback regimes, data model — 14 in total) live in **[ARCHITECTURE.md](ARCHITECTURE.md)** and on the **[docs site](https://rrahimi-uci.github.io/agentic-context-engineering/architecture.html)**.
 
 ---
 
