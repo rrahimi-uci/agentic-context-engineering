@@ -91,6 +91,12 @@ class RunResult:
 
 StepCallback = Callable[[StepRecord], None]
 
+# A user-supplied hook that turns a (sample, generation) pair into Feedback.
+# This is the extension point for *custom* and *label-free* tasks: plug in your
+# own execution signals (test pass/fail, API errors, a reward function, an
+# LLM-as-judge, ...) instead of relying on ground-truth labels.
+FeedbackFn = Callable[[Sample, Generation], Feedback]
+
 
 class ACE:
     """Orchestrates Agentic Context Engineering over a playbook.
@@ -123,7 +129,7 @@ class ACE:
         self.embedder = embedder
         self.generator = Generator(generator_llm or llm)
         self.reflector = Reflector(reflector_llm or llm, max_rounds=self.config.reflector_max_rounds)
-        self.curator = Curator(curator_llm or llm)
+        self.curator = Curator(curator_llm or llm, use_llm=self.config.curator_use_llm)
         self._step = 0
 
     # ------------------------------------------------------------------ #
@@ -186,17 +192,23 @@ class ACE:
         self,
         task: Task,
         callback: Optional[StepCallback] = None,
+        feedback_fn: Optional[FeedbackFn] = None,
     ) -> RunResult:
         """Multi-epoch offline adaptation over a (training) task.
 
         Mirrors offline context optimization: revisit the same samples across
         epochs to progressively strengthen the playbook.
+
+        Pass ``feedback_fn`` to supply custom / label-free feedback for each
+        ``(sample, generation)`` instead of relying on ``sample.answer``.
         """
         history: List[StepRecord] = []
         for epoch in range(self.config.epochs):
             for sample in task.samples:
-                fb = self._build_feedback(sample, task)
-                rec = self.step(sample, fb, phase=f"offline-e{epoch + 1}", callback=callback)
+                gen = self.generator.generate(sample, self.playbook)
+                fb = self._build_feedback(sample, task, generation=gen, feedback_fn=feedback_fn)
+                rec = self.step(sample, fb, phase=f"offline-e{epoch + 1}",
+                                callback=callback, generation=gen)
                 history.append(rec)
         return RunResult(history=history, playbook=self.playbook)
 
@@ -204,12 +216,17 @@ class ACE:
         self,
         task: Task,
         callback: Optional[StepCallback] = None,
+        feedback_fn: Optional[FeedbackFn] = None,
     ) -> RunResult:
-        """Sequential online adaptation: predict, then learn, per sample."""
+        """Sequential online adaptation: predict, then learn, per sample.
+
+        Pass ``feedback_fn`` to supply custom / label-free feedback for each
+        ``(sample, generation)`` (e.g. environment signals, a reward function).
+        """
         history: List[StepRecord] = []
         for sample in task.samples:
             gen = self.generator.generate(sample, self.playbook)  # predict first
-            fb = self._build_feedback(sample, task, prediction=gen.answer)
+            fb = self._build_feedback(sample, task, generation=gen, feedback_fn=feedback_fn)
             rec = self.step(sample, fb, phase="online", callback=callback, generation=gen)
             history.append(rec)
         return RunResult(history=history, playbook=self.playbook)
@@ -236,14 +253,22 @@ class ACE:
     # ------------------------------------------------------------------ #
     # Internals
     # ------------------------------------------------------------------ #
-    def _build_feedback(self, sample: Sample, task: Task, prediction: Optional[str] = None) -> Feedback:
+    def _build_feedback(
+        self,
+        sample: Sample,
+        task: Task,
+        generation: Optional[Generation] = None,
+        feedback_fn: Optional[FeedbackFn] = None,
+    ) -> Feedback:
+        # 1) Caller-supplied feedback wins (custom / label-free path).
+        if feedback_fn is not None:
+            return feedback_fn(sample, generation)
+        prediction = generation.answer if generation is not None else None
+        # 2) Label-free with no hook: nothing reliable to learn from.
         if not self.config.use_labels or not sample.answer:
-            # Label-free: rely on whatever execution signal the task surfaces.
-            signal = ""
-            return Feedback(correct=None, ground_truth=None, signal=signal)
-        correct = None
-        if prediction is not None:
-            correct = task.evaluate(prediction, sample)
+            return Feedback(correct=None, ground_truth=None, signal="")
+        # 3) Labeled: grade against the task scorer.
+        correct = task.evaluate(prediction, sample) if prediction is not None else None
         return Feedback(correct=correct, ground_truth=sample.answer, signal="")
 
     def _maybe_refine(self) -> RefineResult:

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Primary SEO -->
+<title>ACE — Agentic Context Engineering | Self-Improving LLM Agent Framework (Python)</title>
+<meta name="description" content="ACE (Agentic Context Engineering) is an open-source Python framework that turns an LLM's context into an evolving, self-improving playbook. Generator–Reflector–Curator loop with incremental delta updates and grow-and-refine. First-class OpenAI Agents SDK support. Faithful ICLR 2026 paper implementation." />
+<meta name="keywords" content="agentic context engineering, ACE, LLM agents, context engineering, prompt optimization, self-improving agents, agent memory, OpenAI Agents SDK, in-context learning, playbook, GEPA, Reflexion, Dynamic Cheatsheet, AppWorld, context adaptation, Python LLM framework, RAG, test-time learning" />
+<meta name="author" content="ACE Framework Contributors" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://your-org.github.io/ace-framework/" />
+<meta name="theme-color" content="#0f172a" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="ACE — Agentic Context Engineering" />
+<meta property="og:title" content="ACE — Agentic Context Engineering: self-improving context playbooks for LLM agents" />
+<meta property="og:description" content="Open-source framework: evolving playbooks for LLM agents via Generator–Reflector–Curator, incremental deltas, and grow-and-refine. Works with the OpenAI Agents SDK." />
+<meta property="og:url" content="https://your-org.github.io/ace-framework/" />
+<meta property="og:image" content="https://your-org.github.io/ace-framework/assets/og-image.svg" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ACE — Agentic Context Engineering" />
+<meta name="twitter:description" content="Self-improving context playbooks for LLM agents. Generator–Reflector–Curator + incremental deltas. OpenAI Agents SDK ready." />
+<meta name="twitter:image" content="https://your-org.github.io/ace-framework/assets/og-image.svg" />
+
+<!-- Structured data: SoftwareSourceCode + SoftwareApplication -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "ACE — Agentic Context Engineering",
+  "description": "Open-source Python framework implementing Agentic Context Engineering: evolving, self-improving context playbooks for LLM agents with a Generator–Reflector–Curator loop, incremental delta updates, and grow-and-refine. First-class OpenAI Agents SDK support.",
+  "codeRepository": "https://github.com/your-org/ace-framework",
+  "programmingLanguage": "Python",
+  "runtimePlatform": "Python 3.9+",
+  "license": "https://opensource.org/licenses/MIT",
+  "keywords": "LLM agents, context engineering, self-improving agents, OpenAI Agents SDK, prompt optimization, agent memory",
+  "author": { "@type": "Organization", "name": "ACE Framework Contributors" },
+  "citation": "https://arxiv.org/abs/2510.04618"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type": "Question", "name": "What is Agentic Context Engineering (ACE)?",
+     "acceptedAnswer": {"@type": "Answer", "text": "ACE is a framework that treats an LLM's context as an evolving playbook of itemized bullets that accumulate, refine, and organize strategies over time through a Generator, Reflector, and Curator, using incremental delta updates instead of full rewrites."}},
+    {"@type": "Question", "name": "Does ACE work with the OpenAI Agents SDK?",
+     "acceptedAnswer": {"@type": "Answer", "text": "Yes. ACEAgent wraps any agents.Agent as a drop-in self-improving memory: the playbook is injected into the agent's instructions and updated from each run's trajectory and feedback."}},
+    {"@type": "Question", "name": "Does ACE need ground-truth labels?",
+     "acceptedAnswer": {"@type": "Answer", "text": "No. ACE can adapt from natural execution feedback (test pass/fail, API errors, a reward function) via a feedback_fn hook, in addition to labeled supervision."}}
+  ]
+}
+</script>
+
+<style>
+  :root{--bg:#0b1120;--panel:#111a2e;--ink:#e2e8f0;--muted:#94a3b8;--brand:#3b82f6;--brand2:#22d3ee;--green:#22c55e;--border:#1e293b;}
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;}
+  a{color:var(--brand2);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px;}
+  header.hero{background:radial-gradient(1200px 500px at 50% -10%,#1e3a8a55,transparent),linear-gradient(180deg,#0b1120,#0d1426);padding:72px 20px 56px;text-align:center;border-bottom:1px solid var(--border);}
+  .badge-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:22px;}
+  .badge-row img{height:22px;}
+  h1{font-size:clamp(32px,6vw,56px);margin:.2em 0;letter-spacing:-1px;background:linear-gradient(90deg,#fff,#93c5fd);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .tag{color:var(--brand2);font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:13px;}
+  .lede{font-size:clamp(17px,2.4vw,21px);color:var(--muted);max-width:760px;margin:14px auto 0;}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:28px;}
+  .btn{padding:12px 22px;border-radius:10px;font-weight:600;border:1px solid var(--border);}
+  .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .btn.primary:hover{background:#2563eb;text-decoration:none;}
+  .btn.ghost{background:#0d1426;color:var(--ink);}
+  section{padding:56px 0;border-bottom:1px solid var(--border);}
+  h2{font-size:clamp(24px,4vw,34px);margin:0 0 8px;letter-spacing:-.5px;}
+  .sub{color:var(--muted);margin:0 0 28px;}
+  .grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;}
+  .card h3{margin:.1em 0 .4em;font-size:18px;}
+  .card p{color:var(--muted);margin:0;font-size:15px;}
+  .emoji{font-size:26px;}
+  pre{background:#060a14;border:1px solid var(--border);border-radius:12px;padding:18px;overflow:auto;font-size:14px;}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;text-align:center;}
+  .kpi{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px 16px;}
+  .kpi .n{font-size:34px;font-weight:800;color:var(--green);}
+  .kpi .l{color:var(--muted);font-size:14px;}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-size:15px;}
+  th,td{padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;}
+  th{background:#0d1426;color:#cbd5e1;}
+  .mermaid{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center;}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;}
+  .pill{display:inline-block;background:#0d1426;border:1px solid var(--border);border-radius:999px;padding:4px 12px;font-size:12px;color:var(--muted);margin:2px;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="badge-row">
+      <img alt="Python 3.9+" src="https://img.shields.io/badge/python-3.9%2B-blue.svg" />
+      <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-green.svg" />
+      <img alt="Tests" src="https://img.shields.io/badge/tests-62%20passing-brightgreen.svg" />
+      <img alt="OpenAI Agents SDK" src="https://img.shields.io/badge/OpenAI-Agents%20SDK-black.svg" />
+      <img alt="Paper" src="https://img.shields.io/badge/paper-arXiv%3A2510.04618-b31b1b.svg" />
+    </div>
+    <div class="tag">Agentic Context Engineering</div>
+    <h1>Agents that write their own playbook</h1>
+    <p class="lede">ACE is an open-source Python framework that turns an LLM's <strong>context</strong> into an
+      <strong>evolving, self-improving playbook</strong> — accumulating strategies, domain knowledge, and
+      pitfalls instead of re-prompting. A faithful implementation of the
+      <a href="https://arxiv.org/abs/2510.04618">ICLR 2026 paper</a>, with first-class
+      <strong>OpenAI Agents SDK</strong> support.</p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/your-org/ace-framework">⭐ Star on GitHub</a>
+      <a class="btn ghost" href="#quickstart">Quickstart</a>
+      <a class="btn ghost" href="architecture.html">Architecture</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>Why ACE</h2>
+    <p class="sub">Prompt optimizers suffer <em>brevity bias</em>; monolithic memory suffers <em>context collapse</em>. ACE fixes both.</p>
+    <div class="grid">
+      <div class="card"><div class="emoji">🧠</div><h3>Evolving playbook</h3><p>Context is a set of itemized bullets that accumulate and organize knowledge over time — not a fragile single prompt.</p></div>
+      <div class="card"><div class="emoji">⚡</div><h3>Incremental deltas</h3><p>Localized ADD/UPDATE/REMOVE edits merged by deterministic non-LLM logic. No full rewrites, no collapse.</p></div>
+      <div class="card"><div class="emoji">🔁</div><h3>Generator · Reflector · Curator</h3><p>A modular loop that experiments, reflects, and consolidates — mirroring how humans learn.</p></div>
+      <div class="card"><div class="emoji">🏷️</div><h3>Label-free</h3><p>Learns from natural execution feedback (tests, API errors, rewards) — no ground-truth labels required.</p></div>
+      <div class="card"><div class="emoji">🔌</div><h3>OpenAI Agents SDK</h3><p>Drop-in self-improving memory for any <code>agents.Agent</code> in a few lines.</p></div>
+      <div class="card"><div class="emoji">🔍</div><h3>Interpretable</h3><p>Every bullet has an id and helpful/harmful counters — inspect, edit, and prune the agent's knowledge.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="quickstart">
+  <div class="wrap">
+    <h2>Quickstart</h2>
+    <p class="sub">Install, then run the headline comparison — <strong>no API key required</strong>.</p>
+<pre><code>pip install -e .            # core: numpy + rich only
+ace demo --html report.html # Base vs ACE vs Monolithic (context collapse)
+ace run                     # live terminal dashboard</code></pre>
+    <p class="sub" style="margin-top:24px">…or in ~10 lines of Python:</p>
+<pre><code>from ace import ACE, SimulatedLLM, TeachingEnvironment, build_teaching_task
+from ace.baselines import StaticAgent
+
+env  = TeachingEnvironment()
+task = build_teaching_task()
+train, test = task.split()
+
+base = StaticAgent(SimulatedLLM(env)).run(test)        # no learning
+ace  = ACE(SimulatedLLM(env))
+ace.adapt_offline(train)                               # build a playbook
+result = ace.evaluate(test)                            # held-out eval
+
+print(f"Base {base.accuracy:.0f}%  →  ACE {result.accuracy:.0f}%")
+print(ace.playbook.render())                           # human-readable playbook</code></pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Results you can reproduce</h2>
+    <p class="sub">Straight from the bundled, deterministic, key-free demos (<code>examples/*.py</code>).</p>
+    <div class="kpis">
+      <div class="kpi"><div class="n">+38.9</div><div class="l">pts · quickstart (44→83%)</div></div>
+      <div class="kpi"><div class="n">+46.6</div><div class="l">pts · context-collapse demo</div></div>
+      <div class="kpi"><div class="n">96.6%</div><div class="l">offline warmup + online</div></div>
+      <div class="kpi"><div class="n">−94.9%</div><div class="l">adaptation token ingestion</div></div>
+    </div>
+    <p class="sub" style="margin-top:26px">Reported in the paper (DeepSeek-V3.1):</p>
+    <table>
+      <tr><th>Benchmark</th><th>Baseline</th><th>+ ACE</th></tr>
+      <tr><td>AppWorld (agent, avg)</td><td>42.4% (ReAct)</td><td><strong>59.5%</strong> (+17.1)</td></tr>
+      <tr><td>FiNER (financial NER)</td><td>70.7%</td><td><strong>78.3%</strong></td></tr>
+      <tr><td>Formula (financial reasoning)</td><td>67.5%</td><td><strong>85.5%</strong></td></tr>
+      <tr><td>Adaptation latency (offline)</td><td>—</td><td><strong>−86.9%</strong></td></tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="sub">Generate → Reflect → Curate → deterministic merge → grow-and-refine.</p>
+    <div class="mermaid">
+flowchart LR
+    Q([Query]) --> G[Generator]
+    PB[(Context Playbook)] -. injected .-> G
+    G -->|trajectory + bullet usage| R[Reflector]
+    FB([Feedback: labels or execution signal]) --> R
+    R -->|insights, iterative refinement| C[Curator]
+    C -->|delta items| M{{Deterministic Merge - non-LLM}}
+    M --> PB
+    M --> GR[Grow and Refine: dedupe / prune]
+    GR --> PB
+    </div>
+    <p style="text-align:center;margin-top:22px"><a class="btn ghost" href="architecture.html">📐 Read the full architecture — 14 diagrams</a></p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Use it with the OpenAI Agents SDK</h2>
+    <p class="sub">ACE becomes a self-improving memory for any agent.</p>
+<pre><code>from agents import Agent
+from ace import ACE, OpenAILLM
+from ace.integrations.openai_agents import ACEAgent
+
+base  = Agent(name="Support", instructions="You are a concise support agent.")
+agent = ACEAgent(base, ace=ACE(OpenAILLM(model="gpt-4o-mini")))
+
+out = agent.run_and_learn("Cancel order #C99",
+                          signal="Policy: cancellation requires identity verification first.")
+print(out.output)
+print(agent.ace.playbook.render())   # the agent just wrote itself a rule</code></pre>
+    <div style="margin-top:20px">
+      <span class="pill">self-improving agents</span>
+      <span class="pill">context engineering</span>
+      <span class="pill">agent memory</span>
+      <span class="pill">prompt optimization</span>
+      <span class="pill">test-time learning</span>
+      <span class="pill">in-context learning</span>
+      <span class="pill">OpenAI Agents SDK</span>
+      <span class="pill">LLM playbook</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><strong>ACE — Agentic Context Engineering.</strong> MIT licensed · independent open-source implementation.</p>
+    <p><a href="https://github.com/your-org/ace-framework">GitHub</a> ·
+       <a href="architecture.html">Architecture</a> ·
+       <a href="https://arxiv.org/abs/2510.04618">Paper (arXiv:2510.04618)</a> ·
+       <a href="assets/sample_report.html">Sample run report</a></p>
+    <p style="font-size:12px">All credit for the ACE method belongs to the original paper authors (Zhang, Hu, et al., ICLR 2026).</p>
+  </div>
+</footer>
+
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "dark", securityLevel: "loose" });
+</script>
+</body>
+</html>

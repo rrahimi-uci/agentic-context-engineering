@@ -30,7 +30,7 @@ print(ace.playbook.render())
 from .baselines import MonolithicRewriteAgent, StaticAgent
 from .config import ACEConfig
 from .delta import DeltaContext, DeltaOp, DeltaOperation, MergeResult, apply_delta
-from .engine import ACE, RunResult, StepRecord
+from .engine import ACE, FeedbackFn, RunResult, StepRecord
 from .feedback import Feedback
 from .llm import LLM, OpenAILLM, SimulatedLLM
 from .playbook import Bullet, Playbook, DEFAULT_SECTIONS
@@ -45,6 +45,7 @@ __all__ = [
     "ACEConfig",
     "RunResult",
     "StepRecord",
+    "FeedbackFn",
     "Playbook",
     "Bullet",
     "DEFAULT_SECTIONS",

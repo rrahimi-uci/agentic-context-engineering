@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="ACE — Agentic Context Engineering">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1120"/>
+      <stop offset="1" stop-color="#0d1b3a"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#93c5fd"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="600" cy="-80" r="420" fill="#1e3a8a" opacity="0.25"/>
+  <text x="80" y="150" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="26" letter-spacing="6" fill="#22d3ee" font-weight="700">AGENTIC CONTEXT ENGINEERING</text>
+  <text x="76" y="290" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="118" font-weight="800" fill="url(#title)">ACE</text>
+  <text x="80" y="370" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="44" font-weight="700" fill="#e2e8f0">Agents that write their own playbook</text>
+  <text x="80" y="430" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="28" fill="#94a3b8">Self-improving context for LLM agents — open source, Python,</text>
+  <text x="80" y="468" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="28" fill="#94a3b8">OpenAI Agents SDK ready. Faithful ICLR 2026 implementation.</text>
+  <!-- pipeline chips -->
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="24" font-weight="700">
+    <rect x="80" y="520" width="210" height="56" rx="12" fill="#dbeafe"/>
+    <text x="185" y="557" fill="#1e3a8a" text-anchor="middle">Generator</text>
+    <text x="305" y="557" fill="#64748b" text-anchor="middle">→</text>
+    <rect x="330" y="520" width="200" height="56" rx="12" fill="#f3e8ff"/>
+    <text x="430" y="557" fill="#581c87" text-anchor="middle">Reflector</text>
+    <text x="545" y="557" fill="#64748b" text-anchor="middle">→</text>
+    <rect x="570" y="520" width="180" height="56" rx="12" fill="#dcfce7"/>
+    <text x="660" y="557" fill="#14532d" text-anchor="middle">Curator</text>
+  </g>
+  <text x="1120" y="600" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="20" fill="#475569" text-anchor="end">arXiv:2510.04618 · MIT</text>
+</svg>

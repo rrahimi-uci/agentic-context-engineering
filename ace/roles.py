@@ -194,8 +194,20 @@ class Reflector:
 # Curator
 # --------------------------------------------------------------------------- #
 class Curator:
-    def __init__(self, llm: LLM) -> None:
+    """Turns reflection insights into localized delta operations.
+
+    With a real LLM backend the Curator *calls the model* (``CURATOR_SYSTEM``)
+    so it can propose model-driven ``ADD`` / ``UPDATE`` / ``REMOVE`` edits
+    against the existing playbook — e.g. sharpening a bullet or removing one
+    that proved wrong. If the model returns nothing usable (or ``use_llm`` is
+    off, or the backend is the offline :class:`SimulatedLLM`), it falls back to
+    a deterministic build that turns each insight into an ``ADD`` — so a lesson
+    is never silently dropped.
+    """
+
+    def __init__(self, llm: LLM, use_llm: bool = True) -> None:
         self.llm = llm
+        self.use_llm = use_llm
 
     def curate(
         self,
@@ -204,23 +216,42 @@ class Curator:
         reflection: Reflection,
         playbook: Playbook,
     ) -> DeltaContext:
-        # The Curator's job is mechanical enough that we build deltas directly
-        # from the Reflector's structured insights for BOTH backends. (For real
-        # LLMs the Reflector already returns structured insights; we only call
-        # the model again if you want freeform curation.)
         ops: List[DeltaOperation] = []
-        for ins in reflection.insights:
-            content = str(ins.get("content", "")).strip()
-            if not content:
-                continue
-            ops.append(
-                DeltaOperation(
-                    op=DeltaOp.ADD,
-                    section=str(ins.get("section", "strategies")),
-                    content=content,
-                    tags=list(ins.get("tags", [])),
-                )
+
+        use_model = self.use_llm and not isinstance(self.llm, SimulatedLLM)
+        if use_model and reflection.insights:
+            user = (
+                f"CURRENT PLAYBOOK (edit by id where appropriate):\n{playbook.render()}\n\n"
+                f"DIAGNOSIS:\n{reflection.diagnosis}\n\n"
+                f"NEW INSIGHTS TO INTEGRATE:\n{reflection.insights}\n\n"
+                "Emit a minimal set of delta operations."
             )
+            try:
+                data = self.llm.complete_json(CURATOR_SYSTEM, user)
+                for od in data.get("operations", []):
+                    op = DeltaOperation.from_dict(od)
+                    # Drop ADD/UPDATE with empty content; keep REMOVE.
+                    if op.op is not DeltaOp.REMOVE and not op.content.strip():
+                        continue
+                    ops.append(op)
+            except Exception:
+                ops = []
+
+        # Deterministic fallback: never drop a distilled lesson.
+        if not ops:
+            for ins in reflection.insights:
+                content = str(ins.get("content", "")).strip()
+                if not content:
+                    continue
+                ops.append(
+                    DeltaOperation(
+                        op=DeltaOp.ADD,
+                        section=str(ins.get("section", "strategies")),
+                        content=content,
+                        tags=list(ins.get("tags", [])),
+                    )
+                )
+
         if isinstance(self.llm, SimulatedLLM):
             self.llm.num_calls += 1
         return DeltaContext(

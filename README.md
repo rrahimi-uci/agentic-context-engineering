@@ -6,13 +6,16 @@
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-53%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-62%20passing-brightgreen.svg)](tests/)
 [![OpenAI Agents SDK](https://img.shields.io/badge/OpenAI-Agents%20SDK-black.svg)](https://openai.github.io/openai-agents-python/)
+[![Docs](https://img.shields.io/badge/docs-website-blue.svg)](https://your-org.github.io/ace-framework/)
 [![Paper](https://img.shields.io/badge/paper-arXiv%3A2510.04618-b31b1b.svg)](https://arxiv.org/abs/2510.04618)
 
 **Stop re-prompting. Let your agent *write its own playbook* from experience.**
 
-[Quickstart](#-quickstart) · [Why ACE](#-why-ace) · [OpenAI Agents SDK](#-use-it-with-the-openai-agents-sdk) · [How it works](#-how-it-works) · [Results](#-results) · [Architecture](ARCHITECTURE.md)
+📖 **[Documentation site](https://your-org.github.io/ace-framework/)** · 📐 **[Architecture](https://your-org.github.io/ace-framework/architecture.html)**
+
+[Quickstart](#-quickstart) · [Why ACE](#-why-ace) · [Use on your own task](#-use-it-on-your-own-task) · [OpenAI Agents SDK](#-use-it-with-the-openai-agents-sdk) · [How it works](#-how-it-works) · [Results](#-results) · [Architecture](ARCHITECTURE.md)
 
 </div>
 
@@ -133,6 +136,32 @@ print(agent.ace.playbook.render())   # the agent just wrote itself a rule
 
 ---
 
+## 🧩 Use it on *your own* task
+
+Two extension points make ACE general-purpose — bring your own `Task` and your
+own feedback (no ground-truth labels required):
+
+```python
+from ace import ACE, Feedback, Sample, Task, OpenAILLM
+
+my_task = Task(name="my-domain", samples=[Sample(id="1", question="...")],
+               evaluate=lambda pred, s: my_score(pred, s))
+
+def my_feedback(sample, generation) -> Feedback:
+    # plug in execution signals, a reward fn, or an LLM judge — your call
+    ok = run_my_checks(generation.answer)
+    return Feedback(correct=ok, signal="tests passed" if ok else "tests FAILED")
+
+ace = ACE(OpenAILLM(model="gpt-4o-mini"))
+ace.adapt_online(my_task, feedback_fn=my_feedback)   # learns from YOUR signals
+```
+
+See `examples/05_custom_task.py` (runs offline). The Curator calls the LLM to
+propose `ADD`/`UPDATE`/`REMOVE` edits by default (deterministic fallback never
+drops a lesson); force deterministic curation with `ACEConfig(curator_use_llm=False)`.
+
+---
+
 ## 🧠 How it works
 
 ```mermaid
@@ -160,7 +189,24 @@ flowchart LR
 4. **Deterministic merge** applies those edits to the playbook — *no LLM, no rewrite, no collapse.*
 5. **Grow-and-refine** de-duplicates (semantic or lexical) and prunes consistently harmful bullets.
 
-Full diagrams (sequence, offline/online, data model) live in **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+ACE runs in two regimes — multi-epoch **offline** optimization and sequential **online** test-time adaptation (which can be warm-started from an offline playbook):
+
+```mermaid
+flowchart LR
+    subgraph Offline["Offline — system-prompt optimization"]
+        TR[(Train split)] --> EP{Multi-epoch}
+        EP --> ST[ACE.step] --> EP
+        EP --> PBO[(Playbook)]
+    end
+    subgraph Online["Online — test-time memory"]
+        S[Next sample] --> PR[predict] --> LE[learn] --> S
+    end
+    PBO -. optional warm start .-> Online
+    classDef store fill:#2563eb,color:#fff;
+    class PBO store;
+```
+
+Full diagrams (roles, bullet lifecycle, grow-and-refine, feedback regimes, data model — 14 in total) live in **[ARCHITECTURE.md](ARCHITECTURE.md)** and on the **[docs site](https://your-org.github.io/ace-framework/architecture.html)**.
 
 ---
 

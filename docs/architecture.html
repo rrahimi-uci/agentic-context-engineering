@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ACE Architecture — Agentic Context Engineering (diagrams &amp; design)</title>
+<meta name="description" content="The full architecture of ACE (Agentic Context Engineering): Generator–Reflector–Curator roles, incremental delta updates, grow-and-refine, feedback regimes, OpenAI Agents SDK integration, and design decisions — with 14 mermaid diagrams." />
+<meta name="keywords" content="ACE architecture, agentic context engineering, LLM agent design, Generator Reflector Curator, delta updates, grow-and-refine, mermaid diagrams" />
+<link rel="canonical" href="https://your-org.github.io/ace-framework/architecture.html" />
+<meta name="theme-color" content="#0f172a" />
+<meta property="og:title" content="ACE Architecture — diagrams & design" />
+<meta property="og:description" content="14 mermaid diagrams covering the full ACE framework design." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://your-org.github.io/ace-framework/architecture.html" />
+<style>
+  :root{--bg:#0b1120;--panel:#111a2e;--ink:#e2e8f0;--muted:#94a3b8;--brand:#3b82f6;--brand2:#22d3ee;--border:#1e293b;}
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.65;}
+  a{color:var(--brand2);text-decoration:none;}a:hover{text-decoration:underline;}
+  .topbar{position:sticky;top:0;background:#0b1120ee;backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;gap:16px;align-items:center;z-index:10;}
+  .topbar a{font-weight:600;}
+  main{max-width:920px;margin:0 auto;padding:32px 20px 80px;}
+  h1{font-size:34px;letter-spacing:-.5px;}
+  h2{font-size:26px;margin-top:42px;border-bottom:1px solid var(--border);padding-bottom:6px;}
+  h3{font-size:19px;color:#cbd5e1;}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:14px;margin:14px 0;}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;}
+  th{background:#0d1426;}
+  pre{background:#060a14;border:1px solid var(--border);border-radius:10px;padding:14px;overflow:auto;}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;}
+  :not(pre)>code{background:#0d1426;border:1px solid var(--border);border-radius:5px;padding:1px 5px;color:#e2e8f0;}
+  blockquote{border-left:3px solid var(--brand);margin:14px 0;padding:4px 16px;color:var(--muted);background:#0d142655;border-radius:0 8px 8px 0;}
+  .mermaid{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center;margin:18px 0;}
+  hr{border:none;border-top:1px solid var(--border);margin:30px 0;}
+  img{max-width:100%;}
+  .loading{color:var(--muted);padding:40px 0;text-align:center;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html">← ACE home</a>
+  <a href="https://github.com/your-org/ace-framework">GitHub</a>
+  <a href="https://arxiv.org/abs/2510.04618">Paper</a>
+</div>
+<main id="content"><p class="loading">Loading architecture…</p></main>
+
+<script type="module">
+  import { marked } from "https://cdn.jsdelivr.net/npm/marked@12/lib/marked.esm.js";
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+  mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "loose" });
+
+  const el = document.getElementById("content");
+  try {
+    const md = await (await fetch("architecture.md", { cache: "no-cache" })).text();
+    // Render markdown, but keep mermaid code blocks as <pre class="mermaid">.
+    const renderer = new marked.Renderer();
+    const baseCode = renderer.code.bind(renderer);
+    renderer.code = (code, lang) => {
+      const text = (typeof code === "object") ? code.text : code;
+      const language = (typeof code === "object") ? code.lang : lang;
+      if ((language || "").trim() === "mermaid") {
+        return `<pre class="mermaid">${text.replace(/</g,"&lt;")}</pre>`;
+      }
+      return baseCode(code, lang);
+    };
+    el.innerHTML = marked.parse(md, { renderer });
+    await mermaid.run({ querySelector: ".mermaid" });
+    document.title = "ACE Architecture — Agentic Context Engineering";
+  } catch (e) {
+    el.innerHTML = `<p>Could not load <code>architecture.md</code>. View it on
+      <a href="https://github.com/your-org/ace-framework/blob/main/ARCHITECTURE.md">GitHub</a>.</p>`;
+  }
+</script>
+</body>
+</html>

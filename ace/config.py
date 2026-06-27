@@ -18,6 +18,7 @@ class ACEConfig:
 
     # Roles / refinement.
     reflector_max_rounds: int = 5
+    curator_use_llm: bool = True   # if False, Curator builds deltas deterministically
     sections: List[str] = field(default_factory=lambda: list(DEFAULT_SECTIONS))
 
     # Offline adaptation.
