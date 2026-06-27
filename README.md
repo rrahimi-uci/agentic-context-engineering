@@ -6,7 +6,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-62%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-112%20passing-brightgreen.svg)](tests/)
 [![OpenAI Agents SDK](https://img.shields.io/badge/OpenAI-Agents%20SDK-black.svg)](https://openai.github.io/openai-agents-python/)
 [![Docs](https://img.shields.io/badge/docs-website-blue.svg)](https://rrahimi-uci.github.io/agentic-context-engineering/)
 [![Paper](https://img.shields.io/badge/paper-arXiv%3A2510.04618-b31b1b.svg)](https://arxiv.org/abs/2510.04618)
@@ -132,6 +132,15 @@ print(out.output)
 print(agent.ace.playbook.render())   # the agent just wrote itself a rule
 ```
 
+Inside an existing event loop (FastAPI, notebooks, other async agents) use the
+async entry points — same semantics, no `run_sync`:
+
+```python
+out = await agent.arun_and_learn("Cancel order #C99", signal="...")
+```
+
+`ACEAgent` accepts string **or** dynamic (callable) base instructions and
+composes the playbook beneath them; pass `base_instructions=...` to override.
 `python examples/04_openai_agents.py` is a runnable end-to-end example.
 
 ---
@@ -261,8 +270,8 @@ ace/
 ├── integrations/
 │   └── openai_agents.py   # ACEAgent: drop-in self-improving memory
 └── cli.py           # `ace demo | run | playbook | version`
-examples/            # 4 runnable demos (3 need no API key)
-tests/               # 53 tests, run in <1s, zero network
+examples/            # 5 runnable demos (4 need no API key)
+tests/               # 112 tests, run in <1s, zero network
 ```
 
 ---
@@ -271,7 +280,7 @@ tests/               # 53 tests, run in <1s, zero network
 
 ```bash
 pip install -e ".[dev]"
-pytest                       # 53 tests, fully offline, ~0.1s
+pytest                       # 112 tests, fully offline, ~1s
 python examples/01_quickstart.py
 python examples/02_context_collapse.py   # writes ace_report.html
 ```

@@ -22,30 +22,57 @@ out = agent.run_and_learn("Refund order #123", signal="tool refund() returned 20
 print(out.output)
 print(agent.ace.playbook.render())
 ```
+
+Both synchronous (:meth:`ACEAgent.run`, :meth:`ACEAgent.run_and_learn`) and
+asynchronous (:meth:`ACEAgent.arun`, :meth:`ACEAgent.arun_and_learn`) entry
+points are provided. The async variants are the right choice inside an existing
+event loop (FastAPI, notebooks, other async agents) where the SDK's
+``run_sync`` cannot be used.
 """
 
 from __future__ import annotations
 
+import inspect
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, Callable, List, Optional, Union
 
 from ..engine import ACE, StepRecord
 from ..feedback import Feedback
 from ..roles import Generation
 from ..tasks import Sample
 
+# Base instructions may be a plain string or the SDK's "dynamic instructions"
+# callable ``(run_context, agent) -> str``.
+BaseInstructions = Union[str, Callable[[Any, Any], Any]]
 
-def playbook_instructions(base_instructions: str, ace: ACE):
+
+def playbook_instructions(base_instructions: BaseInstructions, ace: ACE):
     """Build a *dynamic instructions* callable for an ``agents.Agent``.
 
     The returned function is called by the Agents SDK on every run and injects
-    the current ACE playbook beneath the agent's base instructions.
+    the current ACE playbook beneath the agent's base instructions. The base may
+    itself be the SDK's dynamic-instructions callable; if it is, we resolve it
+    first and compose. (An *async* base-instructions callable cannot be resolved
+    from this synchronous hook and is treated as empty — pass a resolved string
+    via ``ACEAgent(base, ace, base_instructions=...)`` in that case.)
     """
 
-    def _instructions(_run_context: Any, _agent: Any) -> str:
+    def _instructions(run_context: Any, agent: Any) -> str:
+        base = base_instructions
+        if callable(base):
+            try:
+                base = base(run_context, agent)
+            except Exception:
+                base = ""
+        if inspect.isawaitable(base):  # async dynamic instructions — can't await here
+            try:
+                base.close()  # type: ignore[union-attr]
+            except Exception:
+                pass
+            base = ""
         rendered = ace.playbook.render()
         return (
-            f"{base_instructions}\n\n"
+            f"{base or ''}\n\n"
             "# Playbook (accumulated strategies, domain knowledge, and pitfalls)\n"
             "Use the following playbook. Prefer its strategies; avoid its known mistakes.\n\n"
             f"{rendered}"
@@ -68,14 +95,25 @@ class ACEAgent:
     Parameters
     ----------
     base_agent:
-        An ``agents.Agent``. Its ``instructions`` (string) are used as the base;
-        the playbook is appended dynamically on each run.
+        An ``agents.Agent``. Its ``instructions`` are used as the base (a string,
+        or the SDK's dynamic-instructions callable); the playbook is appended
+        dynamically on each run.
     ace:
         The :class:`~ace.engine.ACE` engine whose Reflector/Curator update the
         playbook. Use an :class:`~ace.llm.OpenAILLM` backend in production.
+    base_instructions:
+        Optional explicit base instructions, overriding ``base_agent.instructions``.
+        Useful when the base agent uses *async* dynamic instructions (which this
+        wrapper cannot resolve on its own).
     """
 
-    def __init__(self, base_agent: Any, ace: ACE) -> None:
+    def __init__(
+        self,
+        base_agent: Any,
+        ace: ACE,
+        *,
+        base_instructions: Optional[BaseInstructions] = None,
+    ) -> None:
         try:
             from agents import Agent  # noqa: F401
         except ImportError as exc:  # pragma: no cover
@@ -85,22 +123,25 @@ class ACEAgent:
             ) from exc
 
         self.ace = ace
-        base_instr = base_agent.instructions if isinstance(base_agent.instructions, str) else ""
-        self._base_instructions = base_instr or ""
+        resolved = base_instructions if base_instructions is not None else base_agent.instructions
+        # A plain (non-callable) base that is not a string is coerced to "".
+        if not callable(resolved) and not isinstance(resolved, str):
+            resolved = ""
+        self._base_instructions: BaseInstructions = resolved or ""
         # Clone the agent with dynamic, playbook-augmented instructions.
         self.agent = base_agent.clone(
             instructions=playbook_instructions(self._base_instructions, ace)
         )
 
     # ------------------------------------------------------------------ #
+    # Synchronous API
+    # ------------------------------------------------------------------ #
     def run(self, query: str, **runner_kwargs) -> ACERunOutput:
         """Run the agent once (no learning)."""
         from agents import Runner
 
         result = Runner.run_sync(self.agent, query, **runner_kwargs)
-        output = str(result.final_output)
-        trajectory = self._extract_trajectory(result)
-        return ACERunOutput(output=output, trajectory=trajectory, raw_result=result)
+        return self._to_output(result)
 
     def run_and_learn(
         self,
@@ -118,12 +159,38 @@ class ACEAgent:
         or ``signal`` (natural execution feedback — the label-free path).
         """
         run_out = self.run(query, **runner_kwargs)
-        sample = Sample(id=sample_id or f"q-{self.ace._step + 1}", question=query,
-                        answer=ground_truth or "")
-        gen = Generation(answer=run_out.output, reasoning=run_out.trajectory)
-        feedback = Feedback(correct=correct, ground_truth=ground_truth, signal=signal)
-        record = self.ace.step(sample, feedback, phase="agent", generation=gen)
-        run_out.record = record
+        run_out.record = self._learn(
+            query, run_out, ground_truth=ground_truth, correct=correct,
+            signal=signal, sample_id=sample_id,
+        )
+        return run_out
+
+    # ------------------------------------------------------------------ #
+    # Asynchronous API (for use inside an existing event loop)
+    # ------------------------------------------------------------------ #
+    async def arun(self, query: str, **runner_kwargs) -> ACERunOutput:
+        """Run the agent once (no learning), asynchronously."""
+        from agents import Runner
+
+        result = await Runner.run(self.agent, query, **runner_kwargs)
+        return self._to_output(result)
+
+    async def arun_and_learn(
+        self,
+        query: str,
+        *,
+        ground_truth: Optional[str] = None,
+        correct: Optional[bool] = None,
+        signal: str = "",
+        sample_id: Optional[str] = None,
+        **runner_kwargs,
+    ) -> ACERunOutput:
+        """Async counterpart of :meth:`run_and_learn`."""
+        run_out = await self.arun(query, **runner_kwargs)
+        run_out.record = self._learn(
+            query, run_out, ground_truth=ground_truth, correct=correct,
+            signal=signal, sample_id=sample_id,
+        )
         return run_out
 
     def learn(
@@ -135,14 +202,43 @@ class ACEAgent:
         correct: Optional[bool] = None,
         signal: str = "",
         trajectory: str = "",
+        sample_id: Optional[str] = None,
     ) -> StepRecord:
         """Update the playbook from an already-produced (query, output) pair."""
-        sample = Sample(id=f"q-{self.ace._step + 1}", question=query, answer=ground_truth or "")
-        gen = Generation(answer=output, reasoning=trajectory)
+        run_out = ACERunOutput(output=output, trajectory=trajectory)
+        return self._learn(
+            query, run_out, ground_truth=ground_truth, correct=correct,
+            signal=signal, sample_id=sample_id,
+        )
+
+    # ------------------------------------------------------------------ #
+    # Internals
+    # ------------------------------------------------------------------ #
+    def _learn(
+        self,
+        query: str,
+        run_out: ACERunOutput,
+        *,
+        ground_truth: Optional[str],
+        correct: Optional[bool],
+        signal: str,
+        sample_id: Optional[str],
+    ) -> StepRecord:
+        sample = Sample(
+            id=sample_id or f"q-{self.ace._step + 1}",
+            question=query,
+            answer=ground_truth or "",
+        )
+        gen = Generation(answer=run_out.output, reasoning=run_out.trajectory)
         feedback = Feedback(correct=correct, ground_truth=ground_truth, signal=signal)
         return self.ace.step(sample, feedback, phase="agent", generation=gen)
 
-    # ------------------------------------------------------------------ #
+    def _to_output(self, result: Any) -> ACERunOutput:
+        output = str(getattr(result, "final_output", ""))
+        return ACERunOutput(
+            output=output, trajectory=self._extract_trajectory(result), raw_result=result
+        )
+
     @staticmethod
     def _extract_trajectory(result: Any) -> str:
         """Best-effort flatten of the agent run into a trajectory string."""
