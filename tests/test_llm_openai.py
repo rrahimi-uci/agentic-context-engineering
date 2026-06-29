@@ -39,10 +39,30 @@ class _Completions:
         return _Resp(self._content)
 
 
+class _EmbItem:
+    def __init__(self, vec):
+        self.embedding = vec
+
+
+class _EmbResp:
+    def __init__(self, n):
+        self.data = [_EmbItem([0.1, 0.2, 0.3]) for _ in range(n)]
+
+
+class _Embeddings:
+    def __init__(self):
+        self.last = None
+
+    def create(self, model, input):
+        self.last = {"model": model, "input": list(input)}
+        return _EmbResp(len(self.last["input"]))
+
+
 class _FakeClient:
     def __init__(self, content, **kwargs):
         self.init_kwargs = kwargs
         self.chat = type("Chat", (), {"completions": _Completions(content)})()
+        self.embeddings = _Embeddings()
 
 
 def _patch_openai(monkeypatch, content):
@@ -159,6 +179,37 @@ def test_complete_json_falls_back_when_response_format_rejected(monkeypatch):
     calls = holder["client"].chat.completions.calls
     assert len(calls) == 2  # first with response_format (rejected), then without
     assert "response_format" in calls[0] and "response_format" not in calls[1]
+
+
+# --------------------------------------------------------------------------- #
+# Semantic embedder + auto-wiring
+# --------------------------------------------------------------------------- #
+def test_openai_embedder_builds_and_calls(monkeypatch):
+    holder = _patch_openai(monkeypatch, "ok")
+    from ace.llm import OpenAILLM
+
+    embed = OpenAILLM(api_key="sk-test").embedder(model="text-embedding-3-small")
+    vecs = embed(["a", "b"])
+    assert len(vecs) == 2 and len(vecs[0]) == 3
+    assert holder["client"].embeddings.last["model"] == "text-embedding-3-small"
+
+
+def test_ace_auto_wires_openai_embedder(monkeypatch):
+    _patch_openai(monkeypatch, "ok")
+    from ace import ACE
+    from ace.llm import OpenAILLM
+
+    ace = ACE(OpenAILLM(api_key="sk-test"))
+    assert ace.embedder is not None and callable(ace.embedder)
+
+
+def test_auto_embedder_can_be_disabled(monkeypatch):
+    _patch_openai(monkeypatch, "ok")
+    from ace import ACE, ACEConfig
+    from ace.llm import OpenAILLM
+
+    ace = ACE(OpenAILLM(api_key="sk-test"), ACEConfig(auto_embedder=False))
+    assert ace.embedder is None
 
 
 # --------------------------------------------------------------------------- #

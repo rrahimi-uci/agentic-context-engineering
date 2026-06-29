@@ -6,7 +6,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-155%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen.svg)](tests/)
 [![OpenAI Agents SDK](https://img.shields.io/badge/OpenAI-Agents%20SDK-black.svg)](https://openai.github.io/openai-agents-python/)
 [![Docs](https://img.shields.io/badge/docs-website-blue.svg)](https://rrahimi-uci.github.io/agentic-context-engineering/)
 [![Paper](https://img.shields.io/badge/paper-arXiv%3A2510.04618-b31b1b.svg)](https://arxiv.org/abs/2510.04618)
@@ -293,7 +293,7 @@ ace/
 └── cli.py           # `ace demo | run | playbook | version`
 cookbook/            # 10 guided recipes (7 need no API key) + tests
 examples/            # 5 runnable demos (4 need no API key)
-tests/               # 155 tests, run in <1s, zero network
+tests/               # 161 tests, run in <1s, zero network
 ```
 
 ---
@@ -302,7 +302,7 @@ tests/               # 155 tests, run in <1s, zero network
 
 ```bash
 pip install -e ".[dev]"
-pytest                       # 155 tests, fully offline, ~1s
+pytest                       # 161 tests, fully offline, ~1s
 python examples/01_quickstart.py
 python examples/02_context_collapse.py   # writes ace_report.html
 ```
@@ -320,6 +320,8 @@ The bundled `SimulatedLLM` + `TeachingEnvironment` make every demo and test
 **deterministic and key-free**, so the ACE *control loop* is exercised end-to-end
 in CI. Swap in `OpenAILLM` for real models and benchmarks — the algorithm and
 prompts are unchanged.
+
+Release notes live in **[CHANGELOG.md](CHANGELOG.md)**.
 
 ---
 

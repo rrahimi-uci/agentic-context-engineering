@@ -39,6 +39,8 @@ agent.save()
 ```
 """
 
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _dist_version
 from typing import TYPE_CHECKING
 
 from .baselines import MonolithicRewriteAgent, StaticAgent
@@ -57,7 +59,13 @@ from .tasks import Sample, Task, TeachingEnvironment, build_teaching_task
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .integrations.openai_agents import ACEAgent, ACERunOutput, wrap_agent
 
-__version__ = "0.2.0"
+# Single source of truth: the version declared in pyproject.toml, read from the
+# installed package metadata. (Editable installs may report a stale value until
+# reinstalled; a fresh build/install — and the published wheel — is always correct.)
+try:
+    __version__ = _dist_version("ace-playbook")
+except PackageNotFoundError:  # imported from a source tree without an install
+    __version__ = "0.0.0+unknown"
 
 # Names served on demand by ``__getattr__`` from the agents integration.
 _LAZY_AGENTS = {"ACEAgent", "ACERunOutput", "wrap_agent", "playbook_instructions"}

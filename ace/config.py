@@ -30,6 +30,10 @@ class ACEConfig:
     prune_harmful: bool = True
     harmful_margin: int = 2
     lazy_refine_token_budget: Optional[int] = None  # lazy: refine when tokens exceed this
+    # When no embedder is passed and a role backend is an OpenAILLM, auto-wire an
+    # OpenAI embedder for *semantic* de-duplication (falls back to lexical on any
+    # error). Set False to force the dependency-free lexical similarity.
+    auto_embedder: bool = True
 
     # Behaviour.
     use_labels: bool = True  # whether ground-truth labels are given to the Reflector

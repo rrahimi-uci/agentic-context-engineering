@@ -170,6 +170,20 @@ class OpenAILLM:
             raw = self._chat(system_json, user, response_format=None, **kwargs)
         return _extract_json(raw)
 
+    def embedder(self, model: str = "text-embedding-3-small"):
+        """Return a batched embedder that reuses this backend's client.
+
+        Used for *semantic* grow-and-refine de-duplication. Sharing the client
+        means it inherits the same api_key, base_url, retries, and timeout.
+        """
+        client = self._client
+
+        def _embed(texts):
+            resp = client.embeddings.create(model=model, input=list(texts))
+            return [d.embedding for d in resp.data]
+
+        return _embed
+
 
 class SimulatedLLM:
     """Deterministic, offline backend backed by a teaching environment.

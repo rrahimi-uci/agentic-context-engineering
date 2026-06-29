@@ -83,3 +83,29 @@ def test_runresult_aggregates_and_summarizes_usage():
     # each online step = generate + reflect + curate = 3 calls.
     assert result.total_llm_calls > 0
     assert all(r.llm_calls == 3 for r in result.history)
+
+
+def test_split_usage_preserves_total():
+    total = {"prompt_tokens": 10, "completion_tokens": 7, "cached_prompt_tokens": 0, "llm_calls": 4}
+    parts = ACE._split_usage(total, 3)
+    assert len(parts) == 3
+    for key, value in total.items():
+        assert sum(p[key] for p in parts) == value  # nothing lost or invented
+    assert ACE._split_usage(total, 0) == []
+
+
+def test_parallel_evaluate_matches_sequential():
+    env = TeachingEnvironment(seed=3)
+    task = build_teaching_task(repeats=2, seed=3)
+    seq = ACE(SimulatedLLM(env)).evaluate(task)
+    par = ACE(SimulatedLLM(env)).evaluate(task, max_workers=4)
+    # Inference-only: results are identical regardless of concurrency.
+    assert par.accuracy == seq.accuracy
+    assert [r.prediction for r in par.history] == [r.prediction for r in seq.history]
+    assert len(par.history) == len(task.samples)
+
+
+def test_simulated_backend_has_no_auto_embedder():
+    # Auto-wiring only triggers for an OpenAILLM backend; lexical dedup otherwise.
+    ace = ACE(SimulatedLLM(TeachingEnvironment(seed=1)))
+    assert ace.embedder is None

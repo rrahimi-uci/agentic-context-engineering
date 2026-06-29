@@ -21,7 +21,7 @@ from typing import Callable, List, Optional
 from .config import ACEConfig
 from .delta import apply_delta
 from .feedback import Feedback
-from .llm import LLM
+from .llm import LLM, OpenAILLM
 from .playbook import Playbook
 from .refine import Embedder, RefineResult, grow_and_refine
 from .roles import Curator, Generation, Generator, Reflector
@@ -159,13 +159,26 @@ class ACE:
     ) -> None:
         self.config = config or ACEConfig()
         self.playbook = playbook or Playbook(self.config.sections)
-        self.embedder = embedder
         self.generator = Generator(generator_llm or llm)
         self.reflector = Reflector(
             reflector_llm or llm, max_rounds=self.config.reflector_max_rounds
         )
         self.curator = Curator(curator_llm or llm, use_llm=self.config.curator_use_llm)
+        # Use the caller's embedder, else auto-wire a semantic one from an OpenAI
+        # backend (for grow-and-refine dedup); otherwise stay lexical.
+        self.embedder = embedder if embedder is not None else self._auto_embedder()
         self._step = 0
+
+    def _auto_embedder(self) -> Optional[Embedder]:
+        if not self.config.auto_embedder:
+            return None
+        for role_llm in (self.generator.llm, self.reflector.llm, self.curator.llm):
+            if isinstance(role_llm, OpenAILLM):
+                try:
+                    return role_llm.embedder()
+                except Exception:  # pragma: no cover - defensive; stay lexical
+                    return None
+        return None
 
     # ------------------------------------------------------------------ #
     # Public API
@@ -284,36 +297,57 @@ class ACE:
             history.append(rec)
         return RunResult(history=history, playbook=self.playbook)
 
-    def evaluate(self, task: Task) -> RunResult:
-        """Inference-only pass (no adaptation) — useful as a baseline."""
-        history: List[StepRecord] = []
-        for sample in task.samples:
-            self._step += 1
+    def evaluate(self, task: Task, max_workers: int = 1) -> RunResult:
+        """Inference-only pass (no adaptation) — useful as a baseline.
+
+        The playbook never changes here, so each sample's generation is
+        independent: ``max_workers > 1`` runs them concurrently for a faster pass
+        with **identical results**. (In parallel mode LLM-usage counts are split
+        evenly across records — run-level totals stay correct; per-record values
+        are approximate.)
+        """
+        samples = task.samples
+        if max_workers > 1 and len(samples) > 1:
+            from concurrent.futures import ThreadPoolExecutor
+
             u0 = self._usage_snapshot()
-            gen = self.generator.generate(sample, self.playbook)
-            usage = self._usage_delta(u0, self._usage_snapshot())
-            correct = task.evaluate(gen.answer, sample) if sample.answer else None
-            history.append(
-                StepRecord(
-                    step=self._step,
-                    phase="eval",
-                    sample_id=sample.id,
-                    question=sample.question,
-                    prediction=gen.answer,
-                    ground_truth=sample.answer or None,
-                    correct=correct,
-                    delta={},
-                    merge={},
-                    refine={},
-                    playbook_size=len(self.playbook),
-                    playbook_tokens=self.playbook.approx_tokens(),
-                    prompt_tokens=usage["prompt_tokens"],
-                    completion_tokens=usage["completion_tokens"],
-                    cached_prompt_tokens=usage["cached_prompt_tokens"],
-                    llm_calls=usage["llm_calls"],
-                )
-            )
+            with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                gens = list(pool.map(lambda s: self.generator.generate(s, self.playbook), samples))
+            shares = self._split_usage(self._usage_delta(u0, self._usage_snapshot()), len(samples))
+            history = [
+                self._eval_record(sample, gens[i], shares[i], task)
+                for i, sample in enumerate(samples)
+            ]
+        else:
+            history = []
+            for sample in samples:
+                u0 = self._usage_snapshot()
+                gen = self.generator.generate(sample, self.playbook)
+                usage = self._usage_delta(u0, self._usage_snapshot())
+                history.append(self._eval_record(sample, gen, usage, task))
         return RunResult(history=history, playbook=self.playbook)
+
+    def _eval_record(self, sample: Sample, gen: Generation, usage: dict, task: Task) -> StepRecord:
+        self._step += 1
+        correct = task.evaluate(gen.answer, sample) if sample.answer else None
+        return StepRecord(
+            step=self._step,
+            phase="eval",
+            sample_id=sample.id,
+            question=sample.question,
+            prediction=gen.answer,
+            ground_truth=sample.answer or None,
+            correct=correct,
+            delta={},
+            merge={},
+            refine={},
+            playbook_size=len(self.playbook),
+            playbook_tokens=self.playbook.approx_tokens(),
+            prompt_tokens=usage["prompt_tokens"],
+            completion_tokens=usage["completion_tokens"],
+            cached_prompt_tokens=usage["cached_prompt_tokens"],
+            llm_calls=usage["llm_calls"],
+        )
 
     # ------------------------------------------------------------------ #
     # Internals
@@ -346,6 +380,17 @@ class ACE:
     @staticmethod
     def _usage_delta(before: dict, after: dict) -> dict:
         return {k: after[k] - before[k] for k in after}
+
+    @staticmethod
+    def _split_usage(total: dict, n: int) -> List[dict]:
+        """Split a usage total into ``n`` near-equal parts (sum is preserved)."""
+        if n <= 0:
+            return []
+        parts = [{k: total[k] // n for k in total} for _ in range(n)]
+        for k in total:
+            for i in range(total[k] - (total[k] // n) * n):  # spread the remainder
+                parts[i][k] += 1
+        return parts
 
     @staticmethod
     def _apply_usage(rec: StepRecord, usage: dict) -> None:
