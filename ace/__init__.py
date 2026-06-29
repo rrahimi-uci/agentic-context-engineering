@@ -57,7 +57,7 @@ from .tasks import Sample, Task, TeachingEnvironment, build_teaching_task
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from .integrations.openai_agents import ACEAgent, ACERunOutput, wrap_agent
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # Names served on demand by ``__getattr__`` from the agents integration.
 _LAZY_AGENTS = {"ACEAgent", "ACERunOutput", "wrap_agent", "playbook_instructions"}
