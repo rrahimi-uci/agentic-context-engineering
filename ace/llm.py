@@ -123,9 +123,13 @@ class OpenAILLM:
             max_retries=max_retries,
             timeout=timeout,
         )
-        # Lightweight usage accounting (tokens are summed across all calls).
+        # Lightweight usage accounting (summed across all calls). ``cached_prompt_tokens``
+        # is the slice of prompt tokens served from OpenAI's automatic prefix cache —
+        # the static system + playbook prefix is cached for you (no code required), so a
+        # rising cached share is the visible payoff of ACE's stable-prefix prompts.
         self.prompt_tokens = 0
         self.completion_tokens = 0
+        self.cached_prompt_tokens = 0
         self.num_calls = 0
 
     def _chat(
@@ -146,6 +150,9 @@ class OpenAILLM:
         if resp.usage:
             self.prompt_tokens += resp.usage.prompt_tokens or 0
             self.completion_tokens += resp.usage.completion_tokens or 0
+            details = getattr(resp.usage, "prompt_tokens_details", None)
+            if details is not None:
+                self.cached_prompt_tokens += getattr(details, "cached_tokens", 0) or 0
         return resp.choices[0].message.content or ""
 
     def complete(self, system: str, user: str, **kwargs) -> str:
@@ -181,6 +188,7 @@ class SimulatedLLM:
         self.num_calls = 0
         self.prompt_tokens = 0
         self.completion_tokens = 0
+        self.cached_prompt_tokens = 0
 
     # The simulated roles are driven directly by ace.roles via these helpers,
     # but we also expose the LLM protocol so the type checks and any custom

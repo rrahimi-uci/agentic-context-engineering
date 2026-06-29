@@ -53,6 +53,7 @@ notebooks, other async agents) where the SDK's ``run_sync`` cannot be used.
 
 from __future__ import annotations
 
+import asyncio
 import inspect
 import os
 import re
@@ -431,7 +432,7 @@ class ACEAgent:
         """Async counterpart of :meth:`run_and_learn`."""
         run_out = await self.arun(query, **runner_kwargs)
         eff_signal = self._effective_signal(signal, run_out, ground_truth, correct)
-        run_out.record = self._learn(
+        run_out.record = await self._alearn(
             query,
             run_out,
             ground_truth=ground_truth,
@@ -478,7 +479,7 @@ class ACEAgent:
                 on_event(event)
         run_out = self._to_output(streamed, hooks)
         eff_signal = self._effective_signal(signal, run_out, ground_truth, correct)
-        run_out.record = self._learn(
+        run_out.record = await self._alearn(
             query,
             run_out,
             ground_truth=ground_truth,
@@ -558,6 +559,16 @@ class ACEAgent:
         feedback = Feedback(correct=correct, ground_truth=ground_truth, signal=signal)
         with self._learn_trace():
             return self.ace.step(sample, feedback, phase="agent", generation=gen)
+
+    async def _alearn(self, query: str, run_out: ACERunOutput, **feedback) -> StepRecord:
+        """Run the synchronous learn step off the event loop.
+
+        ACE's Reflector/Curator make blocking LLM calls; offloading to a worker
+        thread keeps the caller's event loop (FastAPI, notebooks, other async
+        agents) responsive. ``asyncio.to_thread`` copies the current context, so
+        the ``ace.learn`` tracing span still nests correctly.
+        """
+        return await asyncio.to_thread(self._learn, query, run_out, **feedback)
 
     @contextmanager
     def _learn_trace(self) -> Iterator[None]:

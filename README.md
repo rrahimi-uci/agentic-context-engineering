@@ -6,7 +6,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-152%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-155%20passing-brightgreen.svg)](tests/)
 [![OpenAI Agents SDK](https://img.shields.io/badge/OpenAI-Agents%20SDK-black.svg)](https://openai.github.io/openai-agents-python/)
 [![Docs](https://img.shields.io/badge/docs-website-blue.svg)](https://rrahimi-uci.github.io/agentic-context-engineering/)
 [![Paper](https://img.shields.io/badge/paper-arXiv%3A2510.04618-b31b1b.svg)](https://arxiv.org/abs/2510.04618)
@@ -146,10 +146,15 @@ You don't have to think about the internals — but they're all there:
   typed run-items, so the Reflector learns from *what actually happened*.
 - **Tracing** — the learning step is emitted as an `ace.learn` span next to the
   agent run in the OpenAI trace UI.
-- **Async** — inside an event loop (FastAPI, notebooks), use the same-semantics
+- **Async (non-blocking)** — inside an event loop (FastAPI, notebooks), use the
   async entry points: `await agent.arun_and_learn("Cancel #C99", signal="...")`.
+  The blocking Reflector/Curator calls run off the event loop, so your server
+  stays responsive.
 - **Streaming** — `await agent.arun_streamed_and_learn(query, on_event=...)`,
   or `agent.stream(query)` for full control over `stream_events()`.
+- **Cost is observable** — `RunResult.summary()` and every `StepRecord` report
+  `llm_calls`, prompt/completion tokens, and `cached_prompt_tokens` (OpenAI's
+  automatic prefix cache of the static system + playbook prefix).
 - **Sessions are orthogonal** — ACE memory is *cross-task learned strategy*;
   the SDK's `session=` is *within-conversation history*. Pass a session straight
   through any run: `agent.run_and_learn(q, session=my_session, signal=...)`.
@@ -288,7 +293,7 @@ ace/
 └── cli.py           # `ace demo | run | playbook | version`
 cookbook/            # 10 guided recipes (7 need no API key) + tests
 examples/            # 5 runnable demos (4 need no API key)
-tests/               # 152 tests, run in <1s, zero network
+tests/               # 155 tests, run in <1s, zero network
 ```
 
 ---
@@ -297,7 +302,7 @@ tests/               # 152 tests, run in <1s, zero network
 
 ```bash
 pip install -e ".[dev]"
-pytest                       # 152 tests, fully offline, ~1s
+pytest                       # 155 tests, fully offline, ~1s
 python examples/01_quickstart.py
 python examples/02_context_collapse.py   # writes ace_report.html
 ```

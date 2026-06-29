@@ -46,6 +46,11 @@ class StepRecord:
     playbook_tokens: int
     diagnosis: str = ""
     latency_s: float = 0.0
+    # LLM usage attributable to this step (0 under the offline SimulatedLLM).
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    cached_prompt_tokens: int = 0  # served from the provider's prompt cache
+    llm_calls: int = 0
 
 
 @dataclass
@@ -78,6 +83,29 @@ class RunResult:
     def token_curve(self) -> List[int]:
         return [r.playbook_tokens for r in self.history]
 
+    # LLM usage / cost (summed over the run; nonzero with a real backend) ---- #
+    @property
+    def total_prompt_tokens(self) -> int:
+        return sum(r.prompt_tokens for r in self.history)
+
+    @property
+    def total_completion_tokens(self) -> int:
+        return sum(r.completion_tokens for r in self.history)
+
+    @property
+    def total_tokens(self) -> int:
+        return self.total_prompt_tokens + self.total_completion_tokens
+
+    @property
+    def total_cached_prompt_tokens(self) -> int:
+        """Prompt tokens served from the provider's cache (e.g. OpenAI's
+        automatic prefix caching of the static system + playbook prefix)."""
+        return sum(r.cached_prompt_tokens for r in self.history)
+
+    @property
+    def total_llm_calls(self) -> int:
+        return sum(r.llm_calls for r in self.history)
+
     def summary(self) -> dict:
         graded = [r for r in self.history if r.correct is not None]
         return {
@@ -86,6 +114,11 @@ class RunResult:
             "accuracy": round(self.accuracy, 2),
             "final_playbook_size": self.playbook.stats()["num_bullets"] if self.playbook else 0,
             "final_playbook_tokens": self.playbook.approx_tokens() if self.playbook else 0,
+            "llm_calls": self.total_llm_calls,
+            "prompt_tokens": self.total_prompt_tokens,
+            "completion_tokens": self.total_completion_tokens,
+            "total_tokens": self.total_tokens,
+            "cached_prompt_tokens": self.total_cached_prompt_tokens,
         }
 
 
@@ -156,6 +189,7 @@ class ACE:
         """
         t0 = time.time()
         self._step += 1
+        usage_before = self._usage_snapshot()
 
         gen = generation or self.generator.generate(sample, self.playbook)
 
@@ -169,6 +203,7 @@ class ACE:
         merge = apply_delta(self.playbook, delta, step=self._step)
         refine = self._maybe_refine()
 
+        usage = self._usage_delta(usage_before, self._usage_snapshot())
         rec = StepRecord(
             step=self._step,
             phase=phase,
@@ -190,6 +225,10 @@ class ACE:
             playbook_tokens=self.playbook.approx_tokens(),
             diagnosis=reflection.diagnosis,
             latency_s=round(time.time() - t0, 4),
+            prompt_tokens=usage["prompt_tokens"],
+            completion_tokens=usage["completion_tokens"],
+            cached_prompt_tokens=usage["cached_prompt_tokens"],
+            llm_calls=usage["llm_calls"],
         )
         if callback:
             callback(rec)
@@ -212,11 +251,14 @@ class ACE:
         history: List[StepRecord] = []
         for epoch in range(self.config.epochs):
             for sample in task.samples:
+                u0 = self._usage_snapshot()
                 gen = self.generator.generate(sample, self.playbook)
+                gen_usage = self._usage_delta(u0, self._usage_snapshot())
                 fb = self._build_feedback(sample, task, generation=gen, feedback_fn=feedback_fn)
                 rec = self.step(
                     sample, fb, phase=f"offline-e{epoch + 1}", callback=callback, generation=gen
                 )
+                self._apply_usage(rec, gen_usage)  # fold in the pre-step generation cost
                 history.append(rec)
         return RunResult(history=history, playbook=self.playbook)
 
@@ -233,9 +275,12 @@ class ACE:
         """
         history: List[StepRecord] = []
         for sample in task.samples:
+            u0 = self._usage_snapshot()
             gen = self.generator.generate(sample, self.playbook)  # predict first
+            gen_usage = self._usage_delta(u0, self._usage_snapshot())
             fb = self._build_feedback(sample, task, generation=gen, feedback_fn=feedback_fn)
             rec = self.step(sample, fb, phase="online", callback=callback, generation=gen)
+            self._apply_usage(rec, gen_usage)  # fold in the pre-step generation cost
             history.append(rec)
         return RunResult(history=history, playbook=self.playbook)
 
@@ -244,7 +289,9 @@ class ACE:
         history: List[StepRecord] = []
         for sample in task.samples:
             self._step += 1
+            u0 = self._usage_snapshot()
             gen = self.generator.generate(sample, self.playbook)
+            usage = self._usage_delta(u0, self._usage_snapshot())
             correct = task.evaluate(gen.answer, sample) if sample.answer else None
             history.append(
                 StepRecord(
@@ -260,6 +307,10 @@ class ACE:
                     refine={},
                     playbook_size=len(self.playbook),
                     playbook_tokens=self.playbook.approx_tokens(),
+                    prompt_tokens=usage["prompt_tokens"],
+                    completion_tokens=usage["completion_tokens"],
+                    cached_prompt_tokens=usage["cached_prompt_tokens"],
+                    llm_calls=usage["llm_calls"],
                 )
             )
         return RunResult(history=history, playbook=self.playbook)
@@ -267,6 +318,42 @@ class ACE:
     # ------------------------------------------------------------------ #
     # Internals
     # ------------------------------------------------------------------ #
+    def _usage_snapshot(self) -> dict:
+        """Cumulative LLM usage across the (possibly distinct) role backends.
+
+        Reads optional counters off each backend (``prompt_tokens``,
+        ``completion_tokens``, ``cached_prompt_tokens``, ``num_calls``); missing
+        counters are treated as 0 so any custom :class:`~ace.llm.LLM` works.
+        Shared backends are counted once.
+        """
+        seen: set = set()
+        total = {
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "cached_prompt_tokens": 0,
+            "llm_calls": 0,
+        }
+        for llm in (self.generator.llm, self.reflector.llm, self.curator.llm):
+            if id(llm) in seen:
+                continue
+            seen.add(id(llm))
+            total["prompt_tokens"] += getattr(llm, "prompt_tokens", 0)
+            total["completion_tokens"] += getattr(llm, "completion_tokens", 0)
+            total["cached_prompt_tokens"] += getattr(llm, "cached_prompt_tokens", 0)
+            total["llm_calls"] += getattr(llm, "num_calls", 0)
+        return total
+
+    @staticmethod
+    def _usage_delta(before: dict, after: dict) -> dict:
+        return {k: after[k] - before[k] for k in after}
+
+    @staticmethod
+    def _apply_usage(rec: StepRecord, usage: dict) -> None:
+        rec.prompt_tokens += usage["prompt_tokens"]
+        rec.completion_tokens += usage["completion_tokens"]
+        rec.cached_prompt_tokens += usage["cached_prompt_tokens"]
+        rec.llm_calls += usage["llm_calls"]
+
     def _build_feedback(
         self,
         sample: Sample,

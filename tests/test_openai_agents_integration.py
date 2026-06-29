@@ -167,6 +167,10 @@ def test_arun_and_learn(monkeypatch):
     out = asyncio.run(wrapped.arun_and_learn("q", signal="env feedback"))
     assert out.output == "async-out"
     assert out.record is not None and out.record.phase == "agent"
+    # The blocking learn step is offloaded to a thread (asyncio.to_thread) yet
+    # still records ACE-side usage: reflect + curate on the SimulatedLLM = 2 calls
+    # (the generation came from the agent, so the generator isn't invoked).
+    assert out.record.llm_calls == 2
 
 
 # --------------------------------------------------------------------------- #
