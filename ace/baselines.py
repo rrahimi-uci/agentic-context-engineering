@@ -14,13 +14,12 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 from .engine import RunResult, StepRecord
-from .feedback import Feedback
 from .llm import SimulatedLLM
 from .playbook import Bullet, Playbook
-from .tasks import Sample, Task
+from .tasks import Task
 
 
 class StaticAgent:
@@ -36,10 +35,18 @@ class StaticAgent:
             ans, *_ = self.llm.env.generate(s, self.playbook)
             history.append(
                 StepRecord(
-                    step=i, phase="base", sample_id=s.id, question=s.question,
-                    prediction=ans, ground_truth=s.answer or None,
+                    step=i,
+                    phase="base",
+                    sample_id=s.id,
+                    question=s.question,
+                    prediction=ans,
+                    ground_truth=s.answer or None,
                     correct=task.evaluate(ans, s) if s.answer else None,
-                    delta={}, merge={}, refine={}, playbook_size=0, playbook_tokens=0,
+                    delta={},
+                    merge={},
+                    refine={},
+                    playbook_size=0,
+                    playbook_tokens=0,
                 )
             )
         return RunResult(history=history, playbook=self.playbook)
@@ -77,14 +84,18 @@ class MonolithicRewriteAgent:
             insights, _diag = self.llm.env.reflect(s, bool(correct), use_labels and bool(s.answer))
             for ins in insights:
                 self.playbook.add(
-                    Bullet(content=str(ins["content"]), section=str(ins["section"]),
-                           tags=list(ins.get("tags", [])), created_at_step=i)
+                    Bullet(
+                        content=str(ins["content"]),
+                        section=str(ins["section"]),
+                        tags=list(ins.get("tags", [])),
+                        created_at_step=i,
+                    )
                 )
 
             # Monolithic rewrite step — risks collapse.
             collapsed = False
             if self._collapses(i) and len(self.playbook) > self.keep_on_collapse:
-                kept = self.playbook.bullets[-self.keep_on_collapse:]
+                kept = self.playbook.bullets[-self.keep_on_collapse :]
                 self.playbook = Playbook()
                 for b in kept:
                     self.playbook.add(b)
@@ -92,9 +103,16 @@ class MonolithicRewriteAgent:
 
             history.append(
                 StepRecord(
-                    step=i, phase="monolithic", sample_id=s.id, question=s.question,
-                    prediction=ans, ground_truth=s.answer or None, correct=correct,
-                    delta={}, merge={}, refine={"collapsed": collapsed},
+                    step=i,
+                    phase="monolithic",
+                    sample_id=s.id,
+                    question=s.question,
+                    prediction=ans,
+                    ground_truth=s.answer or None,
+                    correct=correct,
+                    delta={},
+                    merge={},
+                    refine={"collapsed": collapsed},
                     playbook_size=len(self.playbook),
                     playbook_tokens=self.playbook.approx_tokens(),
                     diagnosis="CONTEXT COLLAPSE" if collapsed else "",

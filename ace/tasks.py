@@ -15,7 +15,7 @@ from __future__ import annotations
 import hashlib
 import random
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 
 @dataclass
@@ -25,8 +25,8 @@ class Sample:
     id: str
     question: str
     answer: str = ""
-    concept: str = ""           # hidden rule key (teaching env); free in real tasks
-    rule_text: str = ""         # the canonical lesson for this concept
+    concept: str = ""  # hidden rule key (teaching env); free in real tasks
+    rule_text: str = ""  # the canonical lesson for this concept
     metadata: Dict[str, object] = field(default_factory=dict)
 
 
@@ -58,61 +58,111 @@ class Task:
 
 # A compact catalogue of domain rules across a few areas. Each is phrased as a
 # crisp, reusable lesson — exactly the kind of bullet ACE should accumulate.
-_RULE_BANK: List[Dict[str, str]] = [
-    {"concept": "reserves_multi_property",
-     "rule": "For a 2-unit investment property with 4 financed properties, minimum required reserves are 12 months (not 2 or 6).",
-     "q": "Minimum months of reserves for a 2-unit investment property with four financed properties, all retained post-closing?",
-     "options": ["2 months", "6 months", "12 months", "8 months"], "answer": "12 months"},
-    {"concept": "ipc_high_ltv",
-     "rule": "Interested-party contributions (IPC) for a primary residence with LTV > 90% are capped at 3% of the purchase price.",
-     "q": "Max interested party contribution for a primary residence at 95% LTV?",
-     "options": ["2%", "3%", "6%", "9%"], "answer": "3%"},
-    {"concept": "virtual_currency_funds",
-     "rule": "Virtual currency must be converted to USD and deposited in a U.S. depository institution before closing, with documentation of conversion and source.",
-     "q": "Requirement for virtual currency used toward down payment to be eligible for closing?",
-     "options": ["Convert to USD before loan application", "Held in a regulated exchange at closing",
-                 "Convert to USD and deposit in a U.S. institution before closing, with documentation",
-                 "Use directly with an exchange letter"],
-     "answer": "Convert to USD and deposit in a U.S. institution before closing, with documentation"},
-    {"concept": "gift_funds_primary",
-     "rule": "Gift funds are allowed for the entire down payment on a primary residence; no minimum borrower contribution is required for a 1-unit primary residence.",
-     "q": "Minimum borrower own-funds contribution when using gift funds for a 1-unit primary residence?",
-     "options": ["5%", "3%", "0% (none required)", "10%"], "answer": "0% (none required)"},
-    {"concept": "dti_max_manual",
-     "rule": "For manually underwritten loans, the maximum total debt-to-income (DTI) ratio is generally 36%, extendable to 45% with strong compensating factors.",
-     "q": "Maximum total DTI for a manually underwritten loan with strong compensating factors?",
-     "options": ["36%", "43%", "45%", "50%"], "answer": "45%"},
-    {"concept": "appraisal_waiver",
-     "rule": "An appraisal waiver is not permitted on cash-out refinances; a full appraisal is required.",
-     "q": "Is an appraisal waiver permitted on a cash-out refinance?",
-     "options": ["Yes, always", "Yes, under 80% LTV", "No, a full appraisal is required", "Only for primary residences"],
-     "answer": "No, a full appraisal is required"},
-    {"concept": "self_employed_history",
-     "rule": "Self-employed borrowers generally need a two-year history of self-employment; one year may be acceptable with documented prior related experience.",
-     "q": "Standard self-employment history required to qualify income?",
-     "options": ["6 months", "1 year", "2 years", "5 years"], "answer": "2 years"},
-    {"concept": "escrow_high_ltv",
-     "rule": "Escrow accounts for taxes and insurance are required when the LTV exceeds 80% on most conventional loans.",
-     "q": "When are escrow accounts generally required on a conventional loan?",
-     "options": ["LTV > 80%", "LTV > 95%", "Never", "Only for investment properties"], "answer": "LTV > 80%"},
-    {"concept": "condo_review",
-     "rule": "Established condo projects with limited review require the HOA to carry adequate master insurance and have < 15% of units in arrears on dues.",
-     "q": "A limited condo review requires HOA dues arrears below what threshold?",
-     "options": ["5%", "10%", "15%", "25%"], "answer": "15%"},
-    {"concept": "rate_lock",
-     "rule": "A rate lock guarantees the interest rate for a defined period; if it expires before closing, the loan must be re-locked at current market rates.",
-     "q": "What happens if a rate lock expires before closing?",
-     "options": ["Rate stays the same", "Loan is denied", "Must re-lock at current market rates", "Borrower pays a flat fee"],
-     "answer": "Must re-lock at current market rates"},
-    {"concept": "income_bonus",
-     "rule": "Bonus and overtime income require a two-year average and documented likelihood of continuance to be used for qualifying.",
-     "q": "How is bonus income treated for qualifying?",
-     "options": ["Use most recent year", "Two-year average with continuance", "Cannot be used", "Use highest year"],
-     "answer": "Two-year average with continuance"},
-    {"concept": "subordinate_financing",
-     "rule": "Combined LTV (CLTV) including subordinate financing generally cannot exceed 95% for a 1-unit primary residence purchase.",
-     "q": "Maximum CLTV with subordinate financing for a 1-unit primary residence purchase?",
-     "options": ["80%", "90%", "95%", "100%"], "answer": "95%"},
+_RULE_BANK: List[Dict[str, Any]] = [
+    {
+        "concept": "reserves_multi_property",
+        "rule": "For a 2-unit investment property with 4 financed properties, minimum required reserves are 12 months (not 2 or 6).",
+        "q": "Minimum months of reserves for a 2-unit investment property with four financed properties, all retained post-closing?",
+        "options": ["2 months", "6 months", "12 months", "8 months"],
+        "answer": "12 months",
+    },
+    {
+        "concept": "ipc_high_ltv",
+        "rule": "Interested-party contributions (IPC) for a primary residence with LTV > 90% are capped at 3% of the purchase price.",
+        "q": "Max interested party contribution for a primary residence at 95% LTV?",
+        "options": ["2%", "3%", "6%", "9%"],
+        "answer": "3%",
+    },
+    {
+        "concept": "virtual_currency_funds",
+        "rule": "Virtual currency must be converted to USD and deposited in a U.S. depository institution before closing, with documentation of conversion and source.",
+        "q": "Requirement for virtual currency used toward down payment to be eligible for closing?",
+        "options": [
+            "Convert to USD before loan application",
+            "Held in a regulated exchange at closing",
+            "Convert to USD and deposit in a U.S. institution before closing, with documentation",
+            "Use directly with an exchange letter",
+        ],
+        "answer": "Convert to USD and deposit in a U.S. institution before closing, with documentation",
+    },
+    {
+        "concept": "gift_funds_primary",
+        "rule": "Gift funds are allowed for the entire down payment on a primary residence; no minimum borrower contribution is required for a 1-unit primary residence.",
+        "q": "Minimum borrower own-funds contribution when using gift funds for a 1-unit primary residence?",
+        "options": ["5%", "3%", "0% (none required)", "10%"],
+        "answer": "0% (none required)",
+    },
+    {
+        "concept": "dti_max_manual",
+        "rule": "For manually underwritten loans, the maximum total debt-to-income (DTI) ratio is generally 36%, extendable to 45% with strong compensating factors.",
+        "q": "Maximum total DTI for a manually underwritten loan with strong compensating factors?",
+        "options": ["36%", "43%", "45%", "50%"],
+        "answer": "45%",
+    },
+    {
+        "concept": "appraisal_waiver",
+        "rule": "An appraisal waiver is not permitted on cash-out refinances; a full appraisal is required.",
+        "q": "Is an appraisal waiver permitted on a cash-out refinance?",
+        "options": [
+            "Yes, always",
+            "Yes, under 80% LTV",
+            "No, a full appraisal is required",
+            "Only for primary residences",
+        ],
+        "answer": "No, a full appraisal is required",
+    },
+    {
+        "concept": "self_employed_history",
+        "rule": "Self-employed borrowers generally need a two-year history of self-employment; one year may be acceptable with documented prior related experience.",
+        "q": "Standard self-employment history required to qualify income?",
+        "options": ["6 months", "1 year", "2 years", "5 years"],
+        "answer": "2 years",
+    },
+    {
+        "concept": "escrow_high_ltv",
+        "rule": "Escrow accounts for taxes and insurance are required when the LTV exceeds 80% on most conventional loans.",
+        "q": "When are escrow accounts generally required on a conventional loan?",
+        "options": ["LTV > 80%", "LTV > 95%", "Never", "Only for investment properties"],
+        "answer": "LTV > 80%",
+    },
+    {
+        "concept": "condo_review",
+        "rule": "Established condo projects with limited review require the HOA to carry adequate master insurance and have < 15% of units in arrears on dues.",
+        "q": "A limited condo review requires HOA dues arrears below what threshold?",
+        "options": ["5%", "10%", "15%", "25%"],
+        "answer": "15%",
+    },
+    {
+        "concept": "rate_lock",
+        "rule": "A rate lock guarantees the interest rate for a defined period; if it expires before closing, the loan must be re-locked at current market rates.",
+        "q": "What happens if a rate lock expires before closing?",
+        "options": [
+            "Rate stays the same",
+            "Loan is denied",
+            "Must re-lock at current market rates",
+            "Borrower pays a flat fee",
+        ],
+        "answer": "Must re-lock at current market rates",
+    },
+    {
+        "concept": "income_bonus",
+        "rule": "Bonus and overtime income require a two-year average and documented likelihood of continuance to be used for qualifying.",
+        "q": "How is bonus income treated for qualifying?",
+        "options": [
+            "Use most recent year",
+            "Two-year average with continuance",
+            "Cannot be used",
+            "Use highest year",
+        ],
+        "answer": "Two-year average with continuance",
+    },
+    {
+        "concept": "subordinate_financing",
+        "rule": "Combined LTV (CLTV) including subordinate financing generally cannot exceed 95% for a 1-unit primary residence purchase.",
+        "q": "Maximum CLTV with subordinate financing for a 1-unit primary residence purchase?",
+        "options": ["80%", "90%", "95%", "100%"],
+        "answer": "95%",
+    },
 ]
 
 
@@ -209,12 +259,11 @@ class TeachingEnvironment:
         knows = self.knows(sample.concept)
         correct = knows or taught_by is not None
 
-        options = sample.metadata.get("options", [])  # type: ignore[assignment]
+        options = cast("List[str]", sample.metadata.get("options", []))
         if correct:
             answer = sample.answer
-            reasoning = (
-                f"Recognized the relevant rule for '{sample.concept}' "
-                + ("from prior knowledge." if knows else "from the playbook.")
+            reasoning = f"Recognized the relevant rule for '{sample.concept}' " + (
+                "from prior knowledge." if knows else "from the playbook."
             )
         else:
             # Deterministically pick a wrong option.

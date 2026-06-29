@@ -1,12 +1,12 @@
 """Tests for roles with a fake JSON LLM, the LLM JSON parser, and visualization."""
 
+from ace.engine import ACE, RunResult, StepRecord
+from ace.feedback import Feedback
 from ace.llm import _extract_json
 from ace.playbook import Playbook
 from ace.roles import Curator, Generator, Reflector
-from ace.feedback import Feedback
 from ace.tasks import Sample
-from ace.engine import ACE, RunResult, StepRecord
-from ace.visualize import render_html_report, _windowed_accuracy
+from ace.visualize import _windowed_accuracy, render_html_report
 
 
 class FakeLLM:
@@ -23,9 +23,18 @@ class FakeLLM:
         if "You are the Generator" in system:
             return {"answer": "B", "reasoning": "because", "helpful_ids": [], "harmful_ids": []}
         if "You are the Reflector" in system:
-            return {"diagnosis": "wrong", "insights": [
-                {"content": "always verify units", "section": "common_mistakes", "tags": ["units"]}
-            ], "helpful_ids": [], "harmful_ids": []}
+            return {
+                "diagnosis": "wrong",
+                "insights": [
+                    {
+                        "content": "always verify units",
+                        "section": "common_mistakes",
+                        "tags": ["units"],
+                    }
+                ],
+                "helpful_ids": [],
+                "harmful_ids": [],
+            }
         return {"operations": []}
 
 
@@ -54,7 +63,9 @@ def test_generator_with_fake_llm():
 def test_reflector_produces_insights():
     refl = Reflector(FakeLLM(), max_rounds=1)
     g = Generator(FakeLLM()).generate(Sample(id="1", question="q?"), Playbook())
-    r = refl.reflect(Sample(id="1", question="q?"), g, Feedback(correct=False, ground_truth="A"), Playbook())
+    r = refl.reflect(
+        Sample(id="1", question="q?"), g, Feedback(correct=False, ground_truth="A"), Playbook()
+    )
     assert r.insights and r.insights[0]["content"] == "always verify units"
 
 
@@ -76,24 +87,49 @@ def test_full_loop_with_fake_llm():
 
 
 def test_windowed_accuracy():
-    recs = [StepRecord(step=i, phase="x", sample_id=str(i), question="q",
-                       prediction="", ground_truth="", correct=(i % 2 == 0),
-                       delta={}, merge={}, refine={}, playbook_size=i, playbook_tokens=i)
-            for i in range(1, 7)]
+    recs = [
+        StepRecord(
+            step=i,
+            phase="x",
+            sample_id=str(i),
+            question="q",
+            prediction="",
+            ground_truth="",
+            correct=(i % 2 == 0),
+            delta={},
+            merge={},
+            refine={},
+            playbook_size=i,
+            playbook_tokens=i,
+        )
+        for i in range(1, 7)
+    ]
     acc = _windowed_accuracy(recs, window=3)
     assert len(acc) == 6
     assert all(0 <= a <= 100 for a in acc)
 
 
 def test_render_html_report_is_self_contained():
-    recs = [StepRecord(step=i, phase="online", sample_id=str(i), question="q",
-                       prediction="p", ground_truth="g", correct=(i > 2),
-                       delta={"operations": [{"content": "x"}]},
-                       merge={"added": ["ctx-1"]}, refine={}, playbook_size=i,
-                       playbook_tokens=i * 10)
-            for i in range(1, 6)]
+    recs = [
+        StepRecord(
+            step=i,
+            phase="online",
+            sample_id=str(i),
+            question="q",
+            prediction="p",
+            ground_truth="g",
+            correct=(i > 2),
+            delta={"operations": [{"content": "x"}]},
+            merge={"added": ["ctx-1"]},
+            refine={},
+            playbook_size=i,
+            playbook_tokens=i * 10,
+        )
+        for i in range(1, 6)
+    ]
     pb = Playbook()
     from ace.playbook import Bullet
+
     pb.add(Bullet(content="learned rule"))
     rr = RunResult(history=recs, playbook=pb)
     html = render_html_report({"ACE": rr})

@@ -31,8 +31,8 @@ def run() -> dict:
     result = ace.adapt_online(task)  # predict → learn, sample by sample
 
     n = len(result.history)
-    early = result.accuracy_in_window(0, n // 3)          # before much learning
-    late = result.accuracy_in_window(2 * n // 3, n)       # after accumulating rules
+    early = result.accuracy_in_window(0, n // 3)  # before much learning
+    late = result.accuracy_in_window(2 * n // 3, n)  # after accumulating rules
 
     return {
         "overall_accuracy": result.accuracy,

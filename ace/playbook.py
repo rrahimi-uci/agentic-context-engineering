@@ -17,19 +17,18 @@ See §3.1 of the paper ("Incremental Delta Updates").
 from __future__ import annotations
 
 import json
-import time
 import uuid
 from dataclasses import asdict, dataclass, field
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterator, List, Optional
 
 # Default sections for a general-purpose playbook. Applications can override
 # these via :class:`~ace.config.ACEConfig`.
 DEFAULT_SECTIONS: List[str] = [
-    "strategies",        # reusable, reproducible procedures
-    "domain_concepts",   # facts, definitions, rules of the domain
-    "common_mistakes",   # known failure modes / pitfalls to avoid
-    "tool_usage",        # how to call tools / APIs correctly
-    "formatting",        # output / answer formatting requirements
+    "strategies",  # reusable, reproducible procedures
+    "domain_concepts",  # facts, definitions, rules of the domain
+    "common_mistakes",  # known failure modes / pitfalls to avoid
+    "tool_usage",  # how to call tools / APIs correctly
+    "formatting",  # output / answer formatting requirements
 ]
 
 
@@ -85,7 +84,7 @@ class Bullet:
 
     @classmethod
     def from_dict(cls, d: dict) -> "Bullet":
-        known = {f for f in cls.__dataclass_fields__}  # type: ignore[attr-defined]
+        known = set(cls.__dataclass_fields__)
         return cls(**{k: v for k, v in d.items() if k in known})
 
 
@@ -108,7 +107,7 @@ class Playbook:
     def __len__(self) -> int:
         return len(self._bullets)
 
-    def __iter__(self) -> Iterable[Bullet]:
+    def __iter__(self) -> Iterator[Bullet]:
         return iter(self._bullets.values())
 
     def __contains__(self, bullet_id: str) -> bool:

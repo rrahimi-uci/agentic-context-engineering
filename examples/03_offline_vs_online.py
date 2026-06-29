@@ -38,12 +38,12 @@ print(f"ACE offline warmup + online      : {online_warm.accuracy:5.1f}%")
 # Monolithic rewrite re-ingests the whole context each step; ACE ingests only
 # the small delta. We approximate ingested tokens to illustrate the gap.
 mono = MonolithicRewriteAgent(SimulatedLLM(env)).run(test)
-mono_tokens = sum(r.playbook_tokens for r in mono.history)        # re-ingest whole ctx each step
+mono_tokens = sum(r.playbook_tokens for r in mono.history)  # re-ingest whole ctx each step
 ace_delta_tokens = sum(
     sum(len(op.get("content", "")) // 4 for op in r.delta.get("operations", []))
     for r in online_cold.history
 )
 reduction = 100 * (1 - ace_delta_tokens / max(mono_tokens, 1))
-print(f"\nAdaptation token-ingestion proxy:")
+print("\nAdaptation token-ingestion proxy:")
 print(f"  Monolithic (full re-ingest): {mono_tokens:>7} tok")
 print(f"  ACE (delta merge only)     : {ace_delta_tokens:>7} tok   (-{reduction:.1f}%)")

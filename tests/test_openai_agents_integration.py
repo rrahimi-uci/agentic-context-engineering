@@ -360,7 +360,8 @@ def test_structured_final_output_is_serialized():
 # --------------------------------------------------------------------------- #
 def test_arun_streamed_and_learn(monkeypatch):
     monkeypatch.setattr(
-        agents.Runner, "run_streamed",
+        agents.Runner,
+        "run_streamed",
         staticmethod(lambda agent, q, **kw: _FakeStream("streamed-out", items=["s1"])),
     )
     events = []
@@ -375,6 +376,8 @@ def test_arun_streamed_and_learn(monkeypatch):
 
 def test_stream_returns_raw_streaming_result(monkeypatch):
     sentinel = _FakeStream("x")
-    monkeypatch.setattr(agents.Runner, "run_streamed", staticmethod(lambda agent, q, **kw: sentinel))
+    monkeypatch.setattr(
+        agents.Runner, "run_streamed", staticmethod(lambda agent, q, **kw: sentinel)
+    )
     agent = wrap_agent(agents.Agent(name="S", instructions="x"), ace=_ace())
     assert agent.stream("q") is sentinel

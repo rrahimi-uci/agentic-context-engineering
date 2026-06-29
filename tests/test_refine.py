@@ -1,5 +1,5 @@
 from ace.playbook import Bullet, Playbook
-from ace.refine import grow_and_refine, _jaccard
+from ace.refine import _jaccard, grow_and_refine
 
 
 def test_jaccard_identical():
@@ -12,8 +12,12 @@ def test_jaccard_disjoint():
 
 def test_dedup_removes_near_duplicates():
     pb = Playbook()
-    pb.add(Bullet(content="Convert virtual currency to USD before closing", section="domain_concepts"))
-    pb.add(Bullet(content="Convert virtual currency to USD before closing", section="domain_concepts"))
+    pb.add(
+        Bullet(content="Convert virtual currency to USD before closing", section="domain_concepts")
+    )
+    pb.add(
+        Bullet(content="Convert virtual currency to USD before closing", section="domain_concepts")
+    )
     result = grow_and_refine(pb, dedup_threshold=0.8, prune_harmful=False)
     assert len(pb) == 1
     assert len(result.deduped) == 1
@@ -21,8 +25,8 @@ def test_dedup_removes_near_duplicates():
 
 def test_dedup_folds_counters():
     pb = Playbook()
-    a = pb.add(Bullet(content="same text here always", section="strategies", helpful_count=2))
-    b = pb.add(Bullet(content="same text here always", section="strategies", helpful_count=3))
+    pb.add(Bullet(content="same text here always", section="strategies", helpful_count=2))
+    pb.add(Bullet(content="same text here always", section="strategies", helpful_count=3))
     grow_and_refine(pb, dedup_threshold=0.8, prune_harmful=False)
     # Survivor keeps folded counters.
     survivor = pb.bullets[0]

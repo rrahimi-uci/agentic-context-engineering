@@ -51,10 +51,11 @@ def main() -> int:
     agent = wrap_agent(base, model="gpt-4o-mini", playbook="support_memory.json")
 
     lessons = [
-        ("Where is order #A17?",
-         "Always call lookup_order before answering status questions."),
-        ("Customer asks to cancel #C99 — what do you do?",
-         "Cancellation requires confirming identity first; never cancel without verification."),
+        ("Where is order #A17?", "Always call lookup_order before answering status questions."),
+        (
+            "Customer asks to cancel #C99 — what do you do?",
+            "Cancellation requires confirming identity first; never cancel without verification.",
+        ),
     ]
     for question, signal in lessons:
         out = agent.run_and_learn(question, signal=signal)

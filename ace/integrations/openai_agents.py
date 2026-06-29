@@ -58,7 +58,7 @@ import os
 import re
 from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass, field
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, Iterator, List, Optional, Union
 
 from ..engine import ACE, StepRecord
 from ..feedback import Feedback
@@ -103,7 +103,7 @@ def playbook_instructions(base_instructions: BaseInstructions, ace: ACE):
                 base = ""
         if inspect.isawaitable(base):  # async dynamic instructions — can't await here
             try:
-                base.close()  # type: ignore[union-attr]
+                base.close()  # type: ignore[attr-defined]
             except Exception:
                 pass
             base = ""
@@ -198,7 +198,7 @@ def _run_hooks_class():
     except Exception:
         return None
 
-    class ACERunHooks(RunHooks):  # type: ignore[misc, valid-type]
+    class ACERunHooks(RunHooks):
         """Records a readable trajectory and surfaces tool errors as a signal."""
 
         def __init__(self) -> None:
@@ -217,8 +217,7 @@ def _run_hooks_class():
 
         async def on_handoff(self, context, from_agent, to_agent) -> None:  # noqa: ANN001
             self.events.append(
-                f"[handoff] {getattr(from_agent, 'name', '?')} -> "
-                f"{getattr(to_agent, 'name', '?')}"
+                f"[handoff] {getattr(from_agent, 'name', '?')} -> {getattr(to_agent, 'name', '?')}"
             )
 
         def trajectory(self) -> str:
@@ -399,8 +398,12 @@ class ACEAgent:
         run_out = self.run(query, **runner_kwargs)
         eff_signal = self._effective_signal(signal, run_out, ground_truth, correct)
         run_out.record = self._learn(
-            query, run_out, ground_truth=ground_truth, correct=correct,
-            signal=eff_signal, sample_id=sample_id,
+            query,
+            run_out,
+            ground_truth=ground_truth,
+            correct=correct,
+            signal=eff_signal,
+            sample_id=sample_id,
         )
         return run_out
 
@@ -429,8 +432,12 @@ class ACEAgent:
         run_out = await self.arun(query, **runner_kwargs)
         eff_signal = self._effective_signal(signal, run_out, ground_truth, correct)
         run_out.record = self._learn(
-            query, run_out, ground_truth=ground_truth, correct=correct,
-            signal=eff_signal, sample_id=sample_id,
+            query,
+            run_out,
+            ground_truth=ground_truth,
+            correct=correct,
+            signal=eff_signal,
+            sample_id=sample_id,
         )
         return run_out
 
@@ -472,8 +479,12 @@ class ACEAgent:
         run_out = self._to_output(streamed, hooks)
         eff_signal = self._effective_signal(signal, run_out, ground_truth, correct)
         run_out.record = self._learn(
-            query, run_out, ground_truth=ground_truth, correct=correct,
-            signal=eff_signal, sample_id=sample_id,
+            query,
+            run_out,
+            ground_truth=ground_truth,
+            correct=correct,
+            signal=eff_signal,
+            sample_id=sample_id,
         )
         return run_out
 
@@ -494,8 +505,12 @@ class ACEAgent:
         """Update the playbook from an already-produced (query, output) pair."""
         run_out = ACERunOutput(output=output, trajectory=trajectory)
         return self._learn(
-            query, run_out, ground_truth=ground_truth, correct=correct,
-            signal=signal, sample_id=sample_id,
+            query,
+            run_out,
+            ground_truth=ground_truth,
+            correct=correct,
+            signal=signal,
+            sample_id=sample_id,
         )
 
     # ------------------------------------------------------------------ #
@@ -545,7 +560,7 @@ class ACEAgent:
             return self.ace.step(sample, feedback, phase="agent", generation=gen)
 
     @contextmanager
-    def _learn_trace(self):
+    def _learn_trace(self) -> Iterator[None]:
         """Emit an ``ace.learn`` span; never let tracing break learning."""
         cm: Optional[ExitStack] = None
         if self._trace:
@@ -571,9 +586,7 @@ class ACEAgent:
         trajectory = hooks.trajectory() if hooks is not None else ""
         if not trajectory:
             trajectory = self._extract_trajectory(result)
-        out = ACERunOutput(
-            output=output, trajectory=trajectory[:MAX_TRAJ_CHARS], raw_result=result
-        )
+        out = ACERunOutput(output=output, trajectory=trajectory[:MAX_TRAJ_CHARS], raw_result=result)
         if hooks is not None:
             out.auto_signal = hooks.signal()
             out.events = list(hooks.events)

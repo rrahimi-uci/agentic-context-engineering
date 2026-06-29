@@ -55,8 +55,8 @@ def _cosine(u: Sequence[float], v: Sequence[float]) -> float:
 
 @dataclass
 class RefineResult:
-    deduped: List[str]   # ids removed as duplicates
-    pruned: List[str]    # ids removed for being harmful / unhelpful
+    deduped: List[str]  # ids removed as duplicates
+    pruned: List[str]  # ids removed for being harmful / unhelpful
 
     @property
     def num_removed(self) -> int:
@@ -132,7 +132,9 @@ def grow_and_refine(
     return RefineResult(deduped=deduped, pruned=pruned)
 
 
-def make_openai_embedder(model: str = "text-embedding-3-small", api_key: Optional[str] = None) -> Embedder:
+def make_openai_embedder(
+    model: str = "text-embedding-3-small", api_key: Optional[str] = None
+) -> Embedder:
     """Build an OpenAI-backed batched embedder for semantic de-duplication."""
     from openai import OpenAI
 

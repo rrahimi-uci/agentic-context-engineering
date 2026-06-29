@@ -20,7 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from .delta import DeltaContext, DeltaOperation, DeltaOp
+from .delta import DeltaContext, DeltaOp, DeltaOperation
 from .feedback import Feedback
 from .llm import LLM, SimulatedLLM
 from .playbook import Playbook
@@ -107,8 +107,11 @@ class Generator:
             ans, reasoning, used, helpful, harmful = self.llm.env.generate(sample, playbook)
             self.llm.num_calls += 1
             return Generation(
-                answer=ans, reasoning=reasoning, used_bullet_ids=used,
-                helpful_ids=helpful, harmful_ids=harmful,
+                answer=ans,
+                reasoning=reasoning,
+                used_bullet_ids=used,
+                helpful_ids=helpful,
+                harmful_ids=harmful,
             )
         user = (
             f"PLAYBOOK:\n{playbook.render()}\n\n"
@@ -145,9 +148,7 @@ class Reflector:
             correct = feedback.correct
             if correct is None and feedback.ground_truth is not None:
                 correct = generation.answer.strip().lower() == feedback.ground_truth.strip().lower()
-            insights, diagnosis = self.llm.env.reflect(
-                sample, bool(correct), feedback.has_label
-            )
+            insights, diagnosis = self.llm.env.reflect(sample, bool(correct), feedback.has_label)
             self.llm.num_calls += 1
             return Reflection(
                 insights=insights,

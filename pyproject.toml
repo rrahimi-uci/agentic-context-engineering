@@ -34,8 +34,14 @@ openai = ["openai>=1.40"]
 # pin a realistic floor (tested against 0.17.x) and cap below the 1.0 boundary.
 # Note: the Agents SDK itself requires Python >= 3.10 (the ACE core supports 3.9+).
 agents = ["openai-agents>=0.1,<1.0"]
-dev = ["pytest>=8.0", "python-dotenv>=1.0", "allure-pytest>=2.13"]
-all = ["openai>=1.40", "openai-agents>=0.1,<1.0", "python-dotenv>=1.0", "pytest>=8.0", "allure-pytest>=2.13"]
+dev = [
+  "pytest>=8.0", "python-dotenv>=1.0", "allure-pytest>=2.13",
+  "ruff>=0.6", "mypy>=1.11", "pytest-cov>=5",
+]
+all = [
+  "openai>=1.40", "openai-agents>=0.1,<1.0", "python-dotenv>=1.0",
+  "pytest>=8.0", "allure-pytest>=2.13", "ruff>=0.6", "mypy>=1.11", "pytest-cov>=5",
+]
 
 [project.urls]
 Homepage = "https://github.com/rrahimi-uci/agentic-context-engineering"
@@ -54,3 +60,45 @@ ace = ["py.typed"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+extend-exclude = ["dist", "build", ".venv"]
+
+[tool.ruff.lint]
+# Pragmatic, low-noise gate: pyflakes, pycodestyle, isort, bugbear, comprehensions.
+select = ["E", "F", "I", "W", "B", "C4"]
+# Long prompt/docstring/URL lines are fine; the formatter owns code wrapping.
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Cookbook/examples end with `import sys; sys.exit(main())` and similar teaching
+# patterns; tests use star-ish fixtures. Keep these readable over pedantic.
+"cookbook/*" = ["E402"]
+"examples/*" = ["E402"]
+# This test must call importorskip + set_tracing_disabled before importing the
+# integration, so its module-level imports legitimately follow a statement.
+"tests/test_openai_agents_integration.py" = ["E402"]
+
+[tool.mypy]
+# Type-check against 3.12 (the integration-CI interpreter); runtime 3.9+ support
+# is verified separately by the test matrix executing on 3.9–3.12.
+python_version = "3.12"
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+# Only our package is type-gated; third-party SDKs are used behind narrow seams.
+files = ["ace"]
+
+[[tool.mypy.overrides]]
+module = ["agents.*", "allure"]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["ace"]
+branch = false
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = ["pragma: no cover", "raise NotImplementedError", "if TYPE_CHECKING:"]

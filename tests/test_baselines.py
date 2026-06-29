@@ -31,8 +31,9 @@ def test_monolithic_is_reproducible_across_runs():
     a = MonolithicRewriteAgent(SimulatedLLM(TeachingEnvironment(seed=1))).run(task)
     b = MonolithicRewriteAgent(SimulatedLLM(TeachingEnvironment(seed=1))).run(task)
     assert a.accuracy == b.accuracy
-    assert [r.refine.get("collapsed") for r in a.history] == \
-           [r.refine.get("collapsed") for r in b.history]
+    assert [r.refine.get("collapsed") for r in a.history] == [
+        r.refine.get("collapsed") for r in b.history
+    ]
 
 
 def test_monolithic_learns_rules_into_playbook():

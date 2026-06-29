@@ -59,11 +59,24 @@ def cmd_demo(args: argparse.Namespace) -> int:
 
     rows = [
         ("Base LLM (no context)", f"{base.accuracy:.1f}%", "0", "—"),
-        ("ACE (offline → eval)", f"{ace_eval.accuracy:.1f}%", str(len(ace.playbook)),
-         f"+{ace_eval.accuracy - base.accuracy:.1f} pts"),
-        ("Monolithic rewrite (online)", f"{mono.accuracy:.1f}%", str(mono.history[-1].playbook_size),
-         f"{sum(1 for r in mono.history if r.refine.get('collapsed'))} collapses"),
-        ("ACE (online)", f"{ace_online.accuracy:.1f}%", str(len(ace_online.playbook.bullets)), "no collapse"),
+        (
+            "ACE (offline → eval)",
+            f"{ace_eval.accuracy:.1f}%",
+            str(len(ace.playbook)),
+            f"+{ace_eval.accuracy - base.accuracy:.1f} pts",
+        ),
+        (
+            "Monolithic rewrite (online)",
+            f"{mono.accuracy:.1f}%",
+            str(mono.history[-1].playbook_size),
+            f"{sum(1 for r in mono.history if r.refine.get('collapsed'))} collapses",
+        ),
+        (
+            "ACE (online)",
+            f"{ace_online.accuracy:.1f}%",
+            str(len(ace_online.playbook.bullets) if ace_online.playbook else 0),
+            "no collapse",
+        ),
     ]
     _print_table(rows, ["Method", "Accuracy", "Playbook", "Note"])
 
@@ -86,8 +99,10 @@ def cmd_run(args: argparse.Namespace) -> int:
         result = ace.adapt_online(task, callback=viz)
     from rich.console import Console
 
-    Console().print(f"\nFinal accuracy: [green]{result.accuracy:.1f}%[/green] · "
-                    f"playbook: {len(ace.playbook)} bullets")
+    Console().print(
+        f"\nFinal accuracy: [green]{result.accuracy:.1f}%[/green] · "
+        f"playbook: {len(ace.playbook)} bullets"
+    )
     if args.save_playbook:
         ace.playbook.save(args.save_playbook)
         Console().print(f"Playbook saved to {args.save_playbook}")

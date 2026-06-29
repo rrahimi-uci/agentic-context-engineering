@@ -21,7 +21,7 @@ deterministic and needs **no API key**.
 
 from __future__ import annotations
 
-from ace import ACE, SimulatedLLM, Sample, Task, TeachingEnvironment
+from ace import ACE, Sample, SimulatedLLM, Task, TeachingEnvironment
 from ace.tasks import build_teaching_task
 
 
@@ -41,14 +41,18 @@ def build_my_task() -> Task:
             id=s.id,
             question=s.question,
             answer=s.answer,
-            concept=s.concept,          # the simulator's hidden rule key
+            concept=s.concept,  # the simulator's hidden rule key
             rule_text=s.rule_text,
             metadata=s.metadata,
         )
         for s in source.samples
     ]
-    return Task(name="my-domain", samples=samples, evaluate=my_scorer,
-                description="A task defined entirely from my own data + scorer.")
+    return Task(
+        name="my-domain",
+        samples=samples,
+        evaluate=my_scorer,
+        description="A task defined entirely from my own data + scorer.",
+    )
 
 
 def run() -> dict:

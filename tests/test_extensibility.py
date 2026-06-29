@@ -78,16 +78,19 @@ class CuratorLLM:
 
     def complete_json(self, system, user, **kw):
         self.calls += 1
-        return {"operations": [
-            {"op": "ADD", "section": "strategies", "content": "brand new lesson"},
-            {"op": "UPDATE", "target_id": self.target_id, "content": "sharpened"},
-            {"op": "REMOVE", "target_id": self.target_id},
-        ]}
+        return {
+            "operations": [
+                {"op": "ADD", "section": "strategies", "content": "brand new lesson"},
+                {"op": "UPDATE", "target_id": self.target_id, "content": "sharpened"},
+                {"op": "REMOVE", "target_id": self.target_id},
+            ]
+        }
 
 
 def test_curator_calls_llm_for_update_and_remove():
     pb = Playbook()
     from ace.playbook import Bullet
+
     b = pb.add(Bullet(content="old", section="strategies"))
     llm = CuratorLLM(target_id=b.id)
     refl = Reflection(insights=[{"content": "x", "section": "strategies", "tags": []}])
@@ -101,10 +104,15 @@ def test_curator_calls_llm_for_update_and_remove():
 
 def test_curator_falls_back_when_llm_returns_nothing():
     class EmptyLLM:
-        def complete(self, s, u, **k): return ""
-        def complete_json(self, s, u, **k): return {"operations": []}
+        def complete(self, s, u, **k):
+            return ""
 
-    refl = Reflection(insights=[{"content": "fallback lesson", "section": "domain_concepts", "tags": []}])
+        def complete_json(self, s, u, **k):
+            return {"operations": []}
+
+    refl = Reflection(
+        insights=[{"content": "fallback lesson", "section": "domain_concepts", "tags": []}]
+    )
     delta = Curator(EmptyLLM(), use_llm=True).curate(
         Sample(id="1", question="q"), Generation(answer="a"), refl, Playbook()
     )
@@ -116,10 +124,15 @@ def test_curator_falls_back_when_llm_returns_nothing():
 
 def test_curator_falls_back_on_llm_exception():
     class BoomLLM:
-        def complete(self, s, u, **k): return ""
-        def complete_json(self, s, u, **k): raise RuntimeError("boom")
+        def complete(self, s, u, **k):
+            return ""
 
-    refl = Reflection(insights=[{"content": "resilient lesson", "section": "strategies", "tags": []}])
+        def complete_json(self, s, u, **k):
+            raise RuntimeError("boom")
+
+    refl = Reflection(
+        insights=[{"content": "resilient lesson", "section": "strategies", "tags": []}]
+    )
     delta = Curator(BoomLLM(), use_llm=True).curate(
         Sample(id="1", question="q"), Generation(answer="a"), refl, Playbook()
     )

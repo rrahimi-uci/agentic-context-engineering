@@ -21,7 +21,7 @@ from .playbook import Bullet, Playbook
 
 
 class DeltaOp(str, Enum):
-    ADD = "ADD"        # introduce a brand-new bullet
+    ADD = "ADD"  # introduce a brand-new bullet
     UPDATE = "UPDATE"  # edit the content of an existing bullet
     REMOVE = "REMOVE"  # delete a bullet (e.g. obsolete / wrong)
 

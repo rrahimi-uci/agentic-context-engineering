@@ -1,5 +1,5 @@
-from ace.tasks import build_teaching_task, TeachingEnvironment, Sample
 from ace.playbook import Bullet, Playbook
+from ace.tasks import TeachingEnvironment, build_teaching_task
 
 
 def test_teaching_task_builds():
@@ -57,8 +57,8 @@ def test_reflect_requires_label():
 def test_openai_agents_instructions_builder():
     # The dynamic-instructions builder should not require the SDK to construct.
     from ace import ACE
-    from ace.llm import SimulatedLLM
     from ace.integrations.openai_agents import playbook_instructions
+    from ace.llm import SimulatedLLM
 
     env = TeachingEnvironment(seed=1)
     ace = ACE(SimulatedLLM(env))

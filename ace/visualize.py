@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import html
 import json
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from .engine import RunResult, StepRecord
 
@@ -35,7 +35,7 @@ class LiveRunVisualizer:
         self.title = title
         self.total = total
         self._records: List[StepRecord] = []
-        self._live = None
+        self._live: Any = None  # rich.live.Live, imported lazily in __enter__
 
     def __enter__(self) -> "LiveRunVisualizer":
         from rich.live import Live
@@ -71,9 +71,9 @@ class LiveRunVisualizer:
         return "".join(blocks[int((v - lo) / rng * (len(blocks) - 1))] for v in values[-40:])
 
     def _render(self):
+        from rich.console import Group
         from rich.panel import Panel
         from rich.table import Table
-        from rich.console import Group
 
         latest = self._records[-1] if self._records else None
         acc = self._running_accuracy()
@@ -102,7 +102,9 @@ class LiveRunVisualizer:
         )
 
         spark = Table.grid()
-        spark.add_row(f"playbook growth  [magenta]{self._sparkline([float(s) for s in sizes])}[/magenta]")
+        spark.add_row(
+            f"playbook growth  [magenta]{self._sparkline([float(s) for s in sizes])}[/magenta]"
+        )
 
         # Recent steps table.
         tbl = Table(expand=True, show_edge=False, pad_edge=False)
@@ -111,10 +113,16 @@ class LiveRunVisualizer:
         tbl.add_column("Δ ops", width=18)
         tbl.add_column("note", overflow="ellipsis")
         for r in self._records[-8:]:
-            ok = "[green]✓[/green]" if r.correct else ("[red]✗[/red]" if r.correct is False else "·")
+            ok = (
+                "[green]✓[/green]" if r.correct else ("[red]✗[/red]" if r.correct is False else "·")
+            )
             added = len(r.merge.get("added", [])) if r.merge else 0
             updated = len(r.merge.get("updated", [])) if r.merge else 0
-            removed = len(r.refine.get("deduped", [])) + len(r.refine.get("pruned", [])) if r.refine else 0
+            removed = (
+                len(r.refine.get("deduped", [])) + len(r.refine.get("pruned", []))
+                if r.refine
+                else 0
+            )
             collapsed = r.refine.get("collapsed") if r.refine else False
             ops = f"+{added} ~{updated} -{removed}"
             note = "[red bold]COLLAPSE[/red bold]" if collapsed else (r.diagnosis[:50])
@@ -126,15 +134,15 @@ class LiveRunVisualizer:
 # --------------------------------------------------------------------------- #
 # HTML report
 # --------------------------------------------------------------------------- #
-def _svg_line_chart(series: Dict[str, List[float]], width=560, height=220,
-                    ylabel="", colors=None) -> str:
+def _svg_line_chart(
+    series: Dict[str, List[float]], width=560, height=220, ylabel="", colors=None
+) -> str:
     colors = colors or ["#2563eb", "#dc2626", "#16a34a", "#9333ea"]
     pad = 36
     all_vals = [v for s in series.values() for v in s] or [0, 1]
     ymin, ymax = min(all_vals), max(all_vals)
     if ymax == ymin:
         ymax = ymin + 1
-    max_len = max((len(s) for s in series.values()), default=1)
 
     def x(i, n):
         n = max(n - 1, 1)
@@ -145,22 +153,36 @@ def _svg_line_chart(series: Dict[str, List[float]], width=560, height=220,
 
     parts = [f'<svg viewBox="0 0 {width} {height}" width="100%" style="max-width:{width}px">']
     # axes
-    parts.append(f'<line x1="{pad}" y1="{height-pad}" x2="{width-pad}" y2="{height-pad}" stroke="#cbd5e1"/>')
-    parts.append(f'<line x1="{pad}" y1="{pad}" x2="{pad}" y2="{height-pad}" stroke="#cbd5e1"/>')
-    parts.append(f'<text x="{pad}" y="{pad-12}" font-size="11" fill="#64748b">{html.escape(ylabel)}</text>')
-    parts.append(f'<text x="{pad-6}" y="{y(ymax)+4}" font-size="10" fill="#94a3b8" text-anchor="end">{ymax:.0f}</text>')
-    parts.append(f'<text x="{pad-6}" y="{y(ymin)+4}" font-size="10" fill="#94a3b8" text-anchor="end">{ymin:.0f}</text>')
+    parts.append(
+        f'<line x1="{pad}" y1="{height - pad}" x2="{width - pad}" y2="{height - pad}" stroke="#cbd5e1"/>'
+    )
+    parts.append(f'<line x1="{pad}" y1="{pad}" x2="{pad}" y2="{height - pad}" stroke="#cbd5e1"/>')
+    parts.append(
+        f'<text x="{pad}" y="{pad - 12}" font-size="11" fill="#64748b">{html.escape(ylabel)}</text>'
+    )
+    parts.append(
+        f'<text x="{pad - 6}" y="{y(ymax) + 4}" font-size="10" fill="#94a3b8" text-anchor="end">{ymax:.0f}</text>'
+    )
+    parts.append(
+        f'<text x="{pad - 6}" y="{y(ymin) + 4}" font-size="10" fill="#94a3b8" text-anchor="end">{ymin:.0f}</text>'
+    )
     for ci, (name, s) in enumerate(series.items()):
         color = colors[ci % len(colors)]
         if not s:
             continue
         pts = " ".join(f"{x(i, len(s)):.1f},{y(v):.1f}" for i, v in enumerate(s))
         parts.append(f'<polyline fill="none" stroke="{color}" stroke-width="2.5" points="{pts}"/>')
-        parts.append(f'<circle cx="{x(len(s)-1,len(s)):.1f}" cy="{y(s[-1]):.1f}" r="3" fill="{color}"/>')
+        parts.append(
+            f'<circle cx="{x(len(s) - 1, len(s)):.1f}" cy="{y(s[-1]):.1f}" r="3" fill="{color}"/>'
+        )
         # legend
         ly = pad + ci * 18
-        parts.append(f'<rect x="{width-pad-150}" y="{ly-9}" width="12" height="12" fill="{color}"/>')
-        parts.append(f'<text x="{width-pad-134}" y="{ly+1}" font-size="11" fill="#334155">{html.escape(name)}</text>')
+        parts.append(
+            f'<rect x="{width - pad - 150}" y="{ly - 9}" width="12" height="12" fill="{color}"/>'
+        )
+        parts.append(
+            f'<text x="{width - pad - 134}" y="{ly + 1}" font-size="11" fill="#334155">{html.escape(name)}</text>'
+        )
     parts.append("</svg>")
     return "".join(parts)
 
@@ -215,7 +237,8 @@ def render_html_report(
         pb_html = (
             "<h2>Final Playbook</h2><table class='pb'>"
             "<tr><th>id</th><th>section</th><th>content</th><th>score</th></tr>"
-            + "".join(rows) + "</table>"
+            + "".join(rows)
+            + "</table>"
         )
 
     # Delta timeline (collapse events highlighted).
@@ -238,7 +261,8 @@ def render_html_report(
         timeline_html = (
             "<h2>Adaptation Timeline</h2><table class='pb'>"
             "<tr><th>run</th><th>step</th><th>ok</th><th>event</th><th>playbook size</th></tr>"
-            + "".join(timeline_rows[:200]) + "</table>"
+            + "".join(timeline_rows[:200])
+            + "</table>"
         )
 
     data_json = json.dumps({n: r.summary() for n, r in runs.items()}, indent=2)
@@ -276,7 +300,7 @@ def render_html_report(
 <body>
 <header><h1>{html.escape(title)}</h1><p>{html.escape(subtitle)}</p></header>
 <main>
-  <div class="cards">{''.join(cards)}</div>
+  <div class="cards">{"".join(cards)}</div>
   <div class="chart"><h2 style="margin-top:0">Accuracy over time (rolling window)</h2>
     {_svg_line_chart(acc_series, ylabel="accuracy %")}</div>
   <div class="chart"><h2 style="margin-top:0">Playbook size over time</h2>

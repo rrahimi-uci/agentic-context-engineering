@@ -94,6 +94,74 @@ def test_openai_passes_model_and_temperature(monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
+# Hardening: retries/timeout, JSON mode, and JSON-mode fallback
+# --------------------------------------------------------------------------- #
+def test_client_configured_with_retries_and_timeout(monkeypatch):
+    holder = _patch_openai(monkeypatch, "ok")
+    from ace.llm import OpenAILLM
+
+    OpenAILLM(api_key="sk-test", max_retries=5, timeout=30.0)
+    init = holder["client"].init_kwargs
+    assert init["max_retries"] == 5
+    assert init["timeout"] == 30.0
+
+
+def test_complete_json_uses_json_object_mode(monkeypatch):
+    holder = _patch_openai(monkeypatch, '{"answer": "B"}')
+    from ace.llm import OpenAILLM
+
+    llm = OpenAILLM(api_key="sk-test")  # json_mode=True by default
+    data = llm.complete_json("system", "user")
+    assert data == {"answer": "B"}
+    assert holder["client"].chat.completions.last_kwargs["response_format"] == {
+        "type": "json_object"
+    }
+
+
+def test_json_mode_can_be_disabled(monkeypatch):
+    holder = _patch_openai(monkeypatch, '{"answer": "B"}')
+    from ace.llm import OpenAILLM
+
+    llm = OpenAILLM(api_key="sk-test", json_mode=False)
+    llm.complete_json("system", "user")
+    assert "response_format" not in holder["client"].chat.completions.last_kwargs
+
+
+def test_complete_json_falls_back_when_response_format_rejected(monkeypatch):
+    """A provider that rejects json_object mode should be retried as plain text."""
+
+    class _PickyCompletions:
+        def __init__(self, content):
+            self._content = content
+            self.calls = []
+
+        def create(self, **kwargs):
+            self.calls.append(kwargs)
+            if "response_format" in kwargs:
+                raise ValueError("response_format unsupported")
+            return _Resp(self._content)
+
+    holder = {}
+
+    def _factory(**kwargs):
+        client = type("C", (), {})()
+        client.init_kwargs = kwargs
+        client.chat = type("Chat", (), {"completions": _PickyCompletions('{"ok": 1}')})()
+        holder["client"] = client
+        return client
+
+    monkeypatch.setattr(openai, "OpenAI", _factory)
+    from ace.llm import OpenAILLM
+
+    llm = OpenAILLM(api_key="sk-test")  # json_mode=True
+    data = llm.complete_json("system", "user")
+    assert data == {"ok": 1}
+    calls = holder["client"].chat.completions.calls
+    assert len(calls) == 2  # first with response_format (rejected), then without
+    assert "response_format" in calls[0] and "response_format" not in calls[1]
+
+
+# --------------------------------------------------------------------------- #
 # JSON extraction additional edge cases
 # --------------------------------------------------------------------------- #
 def test_extract_json_nested_braces():

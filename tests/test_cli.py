@@ -1,7 +1,5 @@
 """Tests for the ``ace`` command-line interface (all offline, no API key)."""
 
-import json
-
 from ace import __version__
 from ace.cli import build_parser, main
 from ace.playbook import Bullet, Playbook

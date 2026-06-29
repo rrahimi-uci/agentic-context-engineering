@@ -47,7 +47,7 @@ from .delta import DeltaContext, DeltaOp, DeltaOperation, MergeResult, apply_del
 from .engine import ACE, FeedbackFn, RunResult, StepRecord
 from .feedback import Feedback
 from .llm import LLM, OpenAILLM, SimulatedLLM
-from .playbook import Bullet, Playbook, DEFAULT_SECTIONS
+from .playbook import DEFAULT_SECTIONS, Bullet, Playbook
 from .refine import grow_and_refine, make_openai_embedder
 from .roles import Curator, Generation, Generator, Reflection, Reflector
 from .tasks import Sample, Task, TeachingEnvironment, build_teaching_task

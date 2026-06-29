@@ -37,10 +37,9 @@ jobs:
           python cookbook/06_grow_and_refine.py
           python cookbook/07_inspect_and_report.py
 
-  integration:
-    # Exercises the OpenAI Agents SDK integration with the real SDK installed
-    # (no network: the Runner and OpenAI client are mocked in the tests) and
-    # publishes an Allure test report as a build artifact.
+  quality:
+    # Lint, format-check, and type-check. Runs once on 3.12 with all extras so
+    # mypy can resolve the optional SDK / OpenAI / numpy types.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -51,8 +50,31 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[all]"
-      - name: Run full suite (incl. OpenAI Agents SDK integration) with Allure
-        run: pytest -q --alluredir=allure-results
+      - name: Ruff lint
+        run: ruff check ace tests cookbook examples
+      - name: Ruff format check
+        run: ruff format --check ace tests cookbook examples
+      - name: Mypy type-check
+        run: mypy ace
+
+  integration:
+    # Exercises the OpenAI Agents SDK integration with the real SDK installed
+    # (no network: the Runner and OpenAI client are mocked in the tests) and
+    # publishes an Allure test report + coverage as build artifacts.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install with all extras
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[all]"
+      - name: Run full suite (incl. OpenAI Agents SDK integration) with Allure + coverage
+        run: >-
+          pytest -q --alluredir=allure-results
+          --cov=ace --cov-report=term-missing --cov-report=xml --cov-fail-under=90
       - name: Set up Java for Allure
         if: always()
         uses: actions/setup-java@v5

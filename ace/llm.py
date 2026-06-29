@@ -25,7 +25,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from typing import List, Optional, Protocol, runtime_checkable
+from typing import Any, Dict, Optional, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -68,13 +68,33 @@ def _extract_json(text: str) -> dict:
 class OpenAILLM:
     """OpenAI Chat Completions backend.
 
+    Uses the Chat Completions API — supported by every current OpenAI chat model
+    and by OpenAI-compatible providers (set ``base_url`` to e.g. a vLLM/Together
+    endpoint). The official client's exponential backoff is enabled via
+    ``max_retries``, so transient 429/5xx/connection errors don't fail a run.
+
     Parameters
     ----------
     model:
-        Any chat model id (default ``gpt-4o-mini``). The paper uses the same
-        model for all three roles to isolate the benefit of context.
+        Any chat model id (default ``gpt-4o-mini``). Pass a newer model
+        (e.g. ``gpt-4.1-mini``) as it becomes available — ACE uses the same model
+        for all three roles to isolate the benefit of context.
     api_key:
         Falls back to the ``OPENAI_API_KEY`` environment variable.
+    temperature:
+        Sampling temperature shared by all three roles.
+    base_url:
+        Optional OpenAI-compatible endpoint.
+    max_retries:
+        Automatic retries (with exponential backoff) on transient errors,
+        handled by the OpenAI client.
+    timeout:
+        Per-request timeout in seconds.
+    json_mode:
+        When True (default), :meth:`complete_json` requests guaranteed JSON via
+        ``response_format={"type": "json_object"}``. If the endpoint rejects it
+        (some compatible providers do), it transparently retries once without it
+        and falls back to robust text extraction.
     """
 
     def __init__(
@@ -83,6 +103,9 @@ class OpenAILLM:
         api_key: Optional[str] = None,
         temperature: float = 0.2,
         base_url: Optional[str] = None,
+        max_retries: int = 3,
+        timeout: float = 60.0,
+        json_mode: bool = True,
     ) -> None:
         try:
             from openai import OpenAI
@@ -93,21 +116,32 @@ class OpenAILLM:
             ) from exc
         self.model = model
         self.temperature = temperature
-        self._client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"), base_url=base_url)
+        self.json_mode = json_mode
+        self._client = OpenAI(
+            api_key=api_key or os.getenv("OPENAI_API_KEY"),
+            base_url=base_url,
+            max_retries=max_retries,
+            timeout=timeout,
+        )
         # Lightweight usage accounting (tokens are summed across all calls).
         self.prompt_tokens = 0
         self.completion_tokens = 0
         self.num_calls = 0
 
-    def _chat(self, system: str, user: str, **kwargs) -> str:
-        resp = self._client.chat.completions.create(
-            model=self.model,
-            temperature=kwargs.get("temperature", self.temperature),
-            messages=[
+    def _chat(
+        self, system: str, user: str, *, response_format: Optional[dict] = None, **kwargs
+    ) -> str:
+        create_kwargs: Dict[str, Any] = {
+            "model": self.model,
+            "temperature": kwargs.get("temperature", self.temperature),
+            "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
-        )
+        }
+        if response_format is not None:
+            create_kwargs["response_format"] = response_format
+        resp = self._client.chat.completions.create(**create_kwargs)
         self.num_calls += 1
         if resp.usage:
             self.prompt_tokens += resp.usage.prompt_tokens or 0
@@ -119,7 +153,15 @@ class OpenAILLM:
 
     def complete_json(self, system: str, user: str, **kwargs) -> dict:
         system_json = system + "\n\nRespond with a single valid JSON object and nothing else."
-        return _extract_json(self._chat(system_json, user, **kwargs))
+        response_format = {"type": "json_object"} if self.json_mode else None
+        try:
+            raw = self._chat(system_json, user, response_format=response_format, **kwargs)
+        except Exception:
+            if response_format is None:
+                raise
+            # Endpoint rejected json_object mode — retry once as plain text.
+            raw = self._chat(system_json, user, response_format=None, **kwargs)
+        return _extract_json(raw)
 
 
 class SimulatedLLM:

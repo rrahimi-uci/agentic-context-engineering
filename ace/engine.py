@@ -19,12 +19,12 @@ from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
 from .config import ACEConfig
-from .delta import DeltaContext, MergeResult, apply_delta
+from .delta import apply_delta
 from .feedback import Feedback
 from .llm import LLM
 from .playbook import Playbook
 from .refine import Embedder, RefineResult, grow_and_refine
-from .roles import Curator, Generation, Generator, Reflection, Reflector
+from .roles import Curator, Generation, Generator, Reflector
 from .tasks import Sample, Task
 
 
@@ -33,15 +33,15 @@ class StepRecord:
     """Everything that happened on one adaptation step (for analysis/viz)."""
 
     step: int
-    phase: str                 # "offline-epochN" or "online"
+    phase: str  # "offline-epochN" or "online"
     sample_id: str
     question: str
     prediction: str
     ground_truth: Optional[str]
     correct: Optional[bool]
-    delta: dict                # serialized DeltaContext
-    merge: dict                # added/updated/removed ids
-    refine: dict               # dedup/pruned ids
+    delta: dict  # serialized DeltaContext
+    merge: dict  # added/updated/removed ids
+    refine: dict  # dedup/pruned ids
     playbook_size: int
     playbook_tokens: int
     diagnosis: str = ""
@@ -128,7 +128,9 @@ class ACE:
         self.playbook = playbook or Playbook(self.config.sections)
         self.embedder = embedder
         self.generator = Generator(generator_llm or llm)
-        self.reflector = Reflector(reflector_llm or llm, max_rounds=self.config.reflector_max_rounds)
+        self.reflector = Reflector(
+            reflector_llm or llm, max_rounds=self.config.reflector_max_rounds
+        )
         self.curator = Curator(curator_llm or llm, use_llm=self.config.curator_use_llm)
         self._step = 0
 
@@ -176,8 +178,13 @@ class ACE:
             ground_truth=feedback.ground_truth,
             correct=correct,
             delta=delta.to_dict(),
-            merge={"added": merge.added, "updated": merge.updated, "removed": merge.removed,
-                   "helpful_marked": merge.helpful_marked, "harmful_marked": merge.harmful_marked},
+            merge={
+                "added": merge.added,
+                "updated": merge.updated,
+                "removed": merge.removed,
+                "helpful_marked": merge.helpful_marked,
+                "harmful_marked": merge.harmful_marked,
+            },
             refine={"deduped": refine.deduped, "pruned": refine.pruned},
             playbook_size=len(self.playbook),
             playbook_tokens=self.playbook.approx_tokens(),
@@ -207,8 +214,9 @@ class ACE:
             for sample in task.samples:
                 gen = self.generator.generate(sample, self.playbook)
                 fb = self._build_feedback(sample, task, generation=gen, feedback_fn=feedback_fn)
-                rec = self.step(sample, fb, phase=f"offline-e{epoch + 1}",
-                                callback=callback, generation=gen)
+                rec = self.step(
+                    sample, fb, phase=f"offline-e{epoch + 1}", callback=callback, generation=gen
+                )
                 history.append(rec)
         return RunResult(history=history, playbook=self.playbook)
 
@@ -240,10 +248,16 @@ class ACE:
             correct = task.evaluate(gen.answer, sample) if sample.answer else None
             history.append(
                 StepRecord(
-                    step=self._step, phase="eval", sample_id=sample.id,
-                    question=sample.question, prediction=gen.answer,
-                    ground_truth=sample.answer or None, correct=correct,
-                    delta={}, merge={}, refine={},
+                    step=self._step,
+                    phase="eval",
+                    sample_id=sample.id,
+                    question=sample.question,
+                    prediction=gen.answer,
+                    ground_truth=sample.answer or None,
+                    correct=correct,
+                    delta={},
+                    merge={},
+                    refine={},
                     playbook_size=len(self.playbook),
                     playbook_tokens=self.playbook.approx_tokens(),
                 )
@@ -262,7 +276,8 @@ class ACE:
     ) -> Feedback:
         # 1) Caller-supplied feedback wins (custom / label-free path).
         if feedback_fn is not None:
-            return feedback_fn(sample, generation)
+            gen = generation or self.generator.generate(sample, self.playbook)
+            return feedback_fn(sample, gen)
         prediction = generation.answer if generation is not None else None
         # 2) Label-free with no hook: nothing reliable to learn from.
         if not self.config.use_labels or not sample.answer:

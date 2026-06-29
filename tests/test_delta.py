@@ -4,9 +4,11 @@ from ace.playbook import Bullet, Playbook
 
 def test_add_operation():
     pb = Playbook()
-    delta = DeltaContext(operations=[
-        DeltaOperation(op=DeltaOp.ADD, section="strategies", content="new strat"),
-    ])
+    delta = DeltaContext(
+        operations=[
+            DeltaOperation(op=DeltaOp.ADD, section="strategies", content="new strat"),
+        ]
+    )
     result = apply_delta(pb, delta, step=1)
     assert len(pb) == 1
     assert len(result.added) == 1
@@ -22,9 +24,11 @@ def test_empty_add_is_ignored():
 def test_update_operation():
     pb = Playbook()
     b = pb.add(Bullet(content="old"))
-    delta = DeltaContext(operations=[
-        DeltaOperation(op=DeltaOp.UPDATE, target_id=b.id, content="updated"),
-    ])
+    delta = DeltaContext(
+        operations=[
+            DeltaOperation(op=DeltaOp.UPDATE, target_id=b.id, content="updated"),
+        ]
+    )
     result = apply_delta(pb, delta)
     assert pb.get(b.id).content == "updated"
     assert result.updated == [b.id]
@@ -33,9 +37,14 @@ def test_update_operation():
 def test_remove_operation():
     pb = Playbook()
     b = pb.add(Bullet(content="x"))
-    result = apply_delta(pb, DeltaContext(operations=[
-        DeltaOperation(op=DeltaOp.REMOVE, target_id=b.id),
-    ]))
+    result = apply_delta(
+        pb,
+        DeltaContext(
+            operations=[
+                DeltaOperation(op=DeltaOp.REMOVE, target_id=b.id),
+            ]
+        ),
+    )
     assert len(pb) == 0
     assert result.removed == [b.id]
 

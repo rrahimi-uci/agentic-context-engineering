@@ -60,9 +60,9 @@ def test_apply_delta_add_update_remove():
 def test_apply_delta_skips_empty_add_and_missing_targets():
     pb = Playbook()
     ops = [
-        DeltaOperation(op=DeltaOp.ADD, content="   "),            # empty -> skipped
+        DeltaOperation(op=DeltaOp.ADD, content="   "),  # empty -> skipped
         DeltaOperation(op=DeltaOp.UPDATE, target_id="nope", content="x"),  # no such id
-        DeltaOperation(op=DeltaOp.REMOVE, target_id="nope"),      # no such id
+        DeltaOperation(op=DeltaOp.REMOVE, target_id="nope"),  # no such id
     ]
     res = apply_delta(pb, DeltaContext(operations=ops))
     assert res.added == [] and res.updated == [] and res.removed == []
@@ -82,7 +82,6 @@ def test_apply_delta_marks_helpful_harmful_only_for_existing():
 
 def test_merge_result_num_changes():
     pb = Playbook()
-    ops = [DeltaOperation(op=DeltaOp.ADD, content="a"),
-           DeltaOperation(op=DeltaOp.ADD, content="b")]
+    ops = [DeltaOperation(op=DeltaOp.ADD, content="a"), DeltaOperation(op=DeltaOp.ADD, content="b")]
     res = apply_delta(pb, DeltaContext(operations=ops))
     assert res.num_changes == 2

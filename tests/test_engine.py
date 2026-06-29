@@ -2,7 +2,6 @@ import pytest
 
 from ace import ACE, ACEConfig, SimulatedLLM, TeachingEnvironment, build_teaching_task
 from ace.baselines import MonolithicRewriteAgent, StaticAgent
-from ace.feedback import Feedback
 
 
 @pytest.fixture

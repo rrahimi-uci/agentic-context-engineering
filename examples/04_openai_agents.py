@@ -42,9 +42,14 @@ def main() -> int:
 
     tasks = [
         ("Where is order #A17?", "Always call lookup_order before answering status questions."),
-        ("Is order #B22 delayed?", "State the arrival estimate explicitly and reassure the customer."),
-        ("Customer asks to cancel #C99 — what do you do?",
-         "Cancellation requires confirming identity first; never cancel without verification."),
+        (
+            "Is order #B22 delayed?",
+            "State the arrival estimate explicitly and reassure the customer.",
+        ),
+        (
+            "Customer asks to cancel #C99 — what do you do?",
+            "Cancellation requires confirming identity first; never cancel without verification.",
+        ),
     ]
 
     for q, signal in tasks:
