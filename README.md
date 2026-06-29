@@ -6,7 +6,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-112%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-148%20passing-brightgreen.svg)](tests/)
 [![OpenAI Agents SDK](https://img.shields.io/badge/OpenAI-Agents%20SDK-black.svg)](https://openai.github.io/openai-agents-python/)
 [![Docs](https://img.shields.io/badge/docs-website-blue.svg)](https://rrahimi-uci.github.io/agentic-context-engineering/)
 [![Paper](https://img.shields.io/badge/paper-arXiv%3A2510.04618-b31b1b.svg)](https://arxiv.org/abs/2510.04618)
@@ -15,7 +15,7 @@
 
 📖 **[Documentation site](https://rrahimi-uci.github.io/agentic-context-engineering/)** · 📐 **[Architecture](https://rrahimi-uci.github.io/agentic-context-engineering/architecture.html)**
 
-[Quickstart](#-quickstart) · [Why ACE](#-why-ace) · [Use on your own task](#-use-it-on-your-own-task) · [OpenAI Agents SDK](#-use-it-with-the-openai-agents-sdk) · [How it works](#-how-it-works) · [Results](#-results) · [Architecture](ARCHITECTURE.md)
+[Quickstart](#-quickstart) · [Why ACE](#-why-ace) · [Cookbook](cookbook/README.md) · [Use on your own task](#-use-it-on-your-own-task) · [OpenAI Agents SDK](#-use-it-with-the-openai-agents-sdk) · [How it works](#-how-it-works) · [Results](#-results) · [Architecture](ARCHITECTURE.md)
 
 </div>
 
@@ -111,17 +111,22 @@ instructions on every run; after each task you hand back feedback (a label *or*
 just natural execution signal) and ACE grows the playbook.
 
 ```bash
-pip install "ace-playbook[all]"     # adds openai + openai-agents
+pip install "ace-playbook[all]"     # adds openai + openai-agents (SDK needs Python 3.10+)
 export OPENAI_API_KEY=sk-...
 ```
 
-```python
-from agents import Agent, function_tool
-from ace import ACE, OpenAILLM
-from ace.integrations.openai_agents import ACEAgent
+One call wraps your agent so it learns — `wrap_agent` builds the ACE engine,
+loads a saved playbook if present, and persists what it learns:
 
-base = Agent(name="Support", instructions="You are a concise support agent.")
-agent = ACEAgent(base, ace=ACE(OpenAILLM(model="gpt-4o-mini")))
+```python
+from agents import Agent
+from ace import wrap_agent                # one top-level import
+
+agent = wrap_agent(
+    Agent(name="Support", instructions="You are a concise support agent."),
+    model="gpt-4o-mini",
+    playbook="support_memory.json",       # load if it exists; save target for .save()
+)
 
 # Run + learn from execution feedback — no ground-truth labels needed:
 out = agent.run_and_learn(
@@ -129,19 +134,30 @@ out = agent.run_and_learn(
     signal="Policy: cancellation requires identity verification first.",
 )
 print(out.output)
-print(agent.ace.playbook.render())   # the agent just wrote itself a rule
+print(agent.playbook.render())            # the agent just wrote itself a rule
+agent.save()                              # learned memory survives a restart
 ```
 
-Inside an existing event loop (FastAPI, notebooks, other async agents) use the
-async entry points — same semantics, no `run_sync`:
+You don't have to think about the internals — but they're all there:
 
-```python
-out = await agent.arun_and_learn("Cancel order #C99", signal="...")
-```
+- **Auto-learn from tool errors** — a `RunHooks` listener records each run; if a
+  tool fails and you pass no explicit feedback, that error becomes the signal.
+- **Rich trajectories** — tool calls/outputs/messages are captured via the SDK's
+  typed run-items, so the Reflector learns from *what actually happened*.
+- **Tracing** — the learning step is emitted as an `ace.learn` span next to the
+  agent run in the OpenAI trace UI.
+- **Async** — inside an event loop (FastAPI, notebooks), use the same-semantics
+  async entry points: `await agent.arun_and_learn("Cancel #C99", signal="...")`.
+- **Streaming** — `await agent.arun_streamed_and_learn(query, on_event=...)`,
+  or `agent.stream(query)` for full control over `stream_events()`.
+- **Sessions are orthogonal** — ACE memory is *cross-task learned strategy*;
+  the SDK's `session=` is *within-conversation history*. Pass a session straight
+  through any run: `agent.run_and_learn(q, session=my_session, signal=...)`.
 
-`ACEAgent` accepts string **or** dynamic (callable) base instructions and
-composes the playbook beneath them; pass `base_instructions=...` to override.
-`python examples/04_openai_agents.py` is a runnable end-to-end example.
+Need to share one engine across agents, use a non-OpenAI backend, or pass dynamic
+(callable) base instructions? Drop down to `ACEAgent(base, ace=...)` directly —
+`wrap_agent` is just the batteries-included wrapper around it. A runnable
+end-to-end example lives in `examples/04_openai_agents.py`.
 
 ---
 
@@ -268,10 +284,11 @@ ace/
 ├── baselines.py     # StaticAgent + MonolithicRewriteAgent (context collapse)
 ├── visualize.py     # live terminal dashboard + self-contained HTML report
 ├── integrations/
-│   └── openai_agents.py   # ACEAgent: drop-in self-improving memory
+│   └── openai_agents.py   # wrap_agent / ACEAgent: drop-in self-improving memory
 └── cli.py           # `ace demo | run | playbook | version`
+cookbook/            # 10 guided recipes (7 need no API key) + tests
 examples/            # 5 runnable demos (4 need no API key)
-tests/               # 112 tests, run in <1s, zero network
+tests/               # 148 tests, run in <1s, zero network
 ```
 
 ---
@@ -280,7 +297,7 @@ tests/               # 112 tests, run in <1s, zero network
 
 ```bash
 pip install -e ".[dev]"
-pytest                       # 112 tests, fully offline, ~1s
+pytest                       # 148 tests, fully offline, ~1s
 python examples/01_quickstart.py
 python examples/02_context_collapse.py   # writes ace_report.html
 ```

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<title>ACE Cookbook — runnable recipes for self-improving LLM agents</title>
+<meta name="description" content="The ACE Cookbook: short, runnable recipes that teach Agentic Context Engineering one concept at a time — offline & online adaptation, custom tasks, label-free feedback, persistence, grow-and-refine, and the OpenAI Agents SDK (wrap_agent, auto-learn, streaming, sessions)." />
+<meta name="keywords" content="ACE cookbook, agentic context engineering examples, LLM agent recipes, OpenAI Agents SDK tutorial, wrap_agent, self-improving agents, context engineering tutorial, playbook, agent memory" />
+<meta name="author" content="ACE Framework Contributors" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://rrahimi-uci.github.io/agentic-context-engineering/cookbook.html" />
+<meta name="theme-color" content="#0f172a" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="ACE — Agentic Context Engineering" />
+<meta property="og:title" content="ACE Cookbook — runnable recipes for self-improving LLM agents" />
+<meta property="og:description" content="Short, runnable recipes that teach ACE one concept at a time, from a first playbook to a self-improving OpenAI Agents SDK agent." />
+<meta property="og:url" content="https://rrahimi-uci.github.io/agentic-context-engineering/cookbook.html" />
+<meta property="og:image" content="https://rrahimi-uci.github.io/agentic-context-engineering/assets/og-image.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ACE Cookbook" />
+<meta name="twitter:description" content="Runnable recipes for Agentic Context Engineering — offline/online adaptation, custom tasks, persistence, and the OpenAI Agents SDK." />
+<meta name="twitter:image" content="https://rrahimi-uci.github.io/agentic-context-engineering/assets/og-image.png" />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "ACE Cookbook — learn Agentic Context Engineering through runnable recipes",
+  "description": "A sequence of runnable Python recipes that teach the ACE library: building a playbook, online adaptation, custom tasks, label-free feedback, persistence, grow-and-refine, and the OpenAI Agents SDK integration.",
+  "step": [
+    {"@type": "HowToStep", "name": "Build your first playbook", "url": "https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/01_first_playbook.py"},
+    {"@type": "HowToStep", "name": "Online test-time adaptation", "url": "https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/02_online_adaptation.py"},
+    {"@type": "HowToStep", "name": "Bring your own task", "url": "https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/03_your_own_task.py"},
+    {"@type": "HowToStep", "name": "Learn without labels", "url": "https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/04_label_free_feedback.py"},
+    {"@type": "HowToStep", "name": "Persist and resume", "url": "https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/05_save_and_resume.py"},
+    {"@type": "HowToStep", "name": "Grow and refine", "url": "https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/06_grow_and_refine.py"},
+    {"@type": "HowToStep", "name": "Inspect and report", "url": "https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/07_inspect_and_report.py"},
+    {"@type": "HowToStep", "name": "Agent quickstart", "url": "https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/08_agent_quickstart.py"},
+    {"@type": "HowToStep", "name": "Auto-learn from tool errors", "url": "https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/09_agent_auto_learn_from_tool_errors.py"},
+    {"@type": "HowToStep", "name": "Streaming and sessions", "url": "https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/10_agent_streaming_and_sessions.py"}
+  ]
+}
+</script>
+
+<style>
+  :root{--bg:#0b1120;--panel:#111a2e;--ink:#e2e8f0;--muted:#94a3b8;--brand:#3b82f6;--brand2:#22d3ee;--green:#22c55e;--amber:#f59e0b;--border:#1e293b;}
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;}
+  a{color:var(--brand2);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px;}
+  .topbar{position:sticky;top:0;background:#0b1120ee;backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;gap:16px;align-items:center;z-index:10;}
+  .topbar a{font-weight:600;}
+  header.hero{background:radial-gradient(1200px 500px at 50% -10%,#1e3a8a55,transparent),linear-gradient(180deg,#0b1120,#0d1426);padding:64px 20px 48px;text-align:center;border-bottom:1px solid var(--border);}
+  .tag{color:var(--brand2);font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:13px;}
+  h1{font-size:clamp(30px,5vw,48px);margin:.2em 0;letter-spacing:-1px;background:linear-gradient(90deg,#fff,#93c5fd);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .lede{font-size:clamp(16px,2.2vw,20px);color:var(--muted);max-width:740px;margin:14px auto 0;}
+  section{padding:48px 0;border-bottom:1px solid var(--border);}
+  h2{font-size:clamp(22px,3.6vw,30px);margin:0 0 8px;letter-spacing:-.5px;}
+  .sub{color:var(--muted);margin:0 0 26px;}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;}
+  .card .num{font-size:12px;font-weight:700;color:var(--brand2);letter-spacing:1px;}
+  .card h3{margin:.25em 0 .5em;font-size:17px;}
+  .card h3 code{font-size:14px;background:#0d1426;border:1px solid var(--border);border-radius:6px;padding:2px 7px;color:#e2e8f0;}
+  .card p{color:var(--muted);margin:0 0 14px;font-size:14.5px;flex:1;}
+  .card .foot{display:flex;justify-content:space-between;align-items:center;}
+  .src{font-size:13px;font-weight:600;}
+  .chip{display:inline-block;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:.3px;}
+  .chip.free{background:#052e1a;color:#4ade80;border:1px solid #14532d;}
+  .chip.key{background:#3a2a06;color:#fbbf24;border:1px solid #78350f;}
+  pre{background:#060a14;border:1px solid var(--border);border-radius:12px;padding:18px;overflow:auto;font-size:14px;}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+  .path{background:#060a14;border:1px solid var(--border);border-radius:12px;padding:18px;overflow:auto;font-size:13px;color:var(--muted);}
+  .btn{padding:11px 20px;border-radius:10px;font-weight:600;border:1px solid var(--border);display:inline-block;}
+  .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .btn.primary:hover{background:#2563eb;text-decoration:none;}
+  .btn.ghost{background:#0d1426;color:var(--ink);}
+  footer{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="index.html">← ACE home</a>
+  <a href="architecture.html">Architecture</a>
+  <a href="https://github.com/rrahimi-uci/agentic-context-engineering/tree/main/cookbook">Source on GitHub</a>
+  <a href="https://arxiv.org/abs/2510.04618">Paper</a>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="tag">📓 Cookbook</div>
+    <h1>Learn ACE one recipe at a time</h1>
+    <p class="lede">Ten short, runnable scripts that teach Agentic Context Engineering from a first
+      playbook to a self-improving <strong>OpenAI Agents SDK</strong> agent. Recipes 01–07 need
+      <strong>no API key</strong> and are verified in CI.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>The 30-second version</h2>
+    <p class="sub">Construct, learn, evaluate — then point the same code at a real model.</p>
+<pre><code>from ace import ACE, SimulatedLLM, TeachingEnvironment, build_teaching_task
+
+env  = TeachingEnvironment()
+task = build_teaching_task()
+train, test = task.split()
+
+ace = ACE(SimulatedLLM(env))
+ace.adapt_offline(train)          # build a playbook from feedback
+print(ace.evaluate(test).accuracy)  # measure on held-out data
+print(ace.playbook.render())        # inspect what it learned</code></pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Core recipes <span class="chip free">no API key</span></h2>
+    <p class="sub">Deterministic, offline, and covered by <code>tests/test_cookbook.py</code>.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="num">RECIPE 01</div>
+        <h3><code>first_playbook</code></h3>
+        <p>The three-line workflow — construct → <code>adapt_offline</code> → <code>evaluate</code> — and the accuracy lift over a base LLM with no context.</p>
+        <div class="foot"><span class="chip free">no key</span>
+          <a class="src" href="https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/01_first_playbook.py">View source →</a></div>
+      </div>
+      <div class="card">
+        <div class="num">RECIPE 02</div>
+        <h3><code>online_adaptation</code></h3>
+        <p>Test-time learning: predict-then-learn per sample, and proving the agent improves with windowed accuracy.</p>
+        <div class="foot"><span class="chip free">no key</span>
+          <a class="src" href="https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/02_online_adaptation.py">View source →</a></div>
+      </div>
+      <div class="card">
+        <div class="num">RECIPE 03</div>
+        <h3><code>your_own_task</code></h3>
+        <p>Define a <code>Task</code> from your own <code>Sample</code>s and scorer — ACE makes no assumptions about your domain.</p>
+        <div class="foot"><span class="chip free">no key</span>
+          <a class="src" href="https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/03_your_own_task.py">View source →</a></div>
+      </div>
+      <div class="card">
+        <div class="num">RECIPE 04</div>
+        <h3><code>label_free_feedback</code></h3>
+        <p>Learn with <strong>no gold labels</strong> via a <code>feedback_fn</code> that returns execution signals — the realistic production setting.</p>
+        <div class="foot"><span class="chip free">no key</span>
+          <a class="src" href="https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/04_label_free_feedback.py">View source →</a></div>
+      </div>
+      <div class="card">
+        <div class="num">RECIPE 05</div>
+        <h3><code>save_and_resume</code></h3>
+        <p>Persist a playbook to JSON and warm-start a fresh engine from it — memory that survives a restart.</p>
+        <div class="foot"><span class="chip free">no key</span>
+          <a class="src" href="https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/05_save_and_resume.py">View source →</a></div>
+      </div>
+      <div class="card">
+        <div class="num">RECIPE 06</div>
+        <h3><code>grow_and_refine</code></h3>
+        <p>De-duplicate near-identical bullets and prune consistently harmful ones — deterministic, non-LLM compaction.</p>
+        <div class="foot"><span class="chip free">no key</span>
+          <a class="src" href="https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/06_grow_and_refine.py">View source →</a></div>
+      </div>
+      <div class="card">
+        <div class="num">RECIPE 07</div>
+        <h3><code>inspect_and_report</code></h3>
+        <p>Introspect bullets and stats, then render a polished, dependency-free <strong>HTML report</strong> of a run.</p>
+        <div class="foot"><span class="chip free">no key</span>
+          <a class="src" href="https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/07_inspect_and_report.py">View source →</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>OpenAI Agents SDK recipes <span class="chip key">API key</span></h2>
+    <p class="sub">Install the extras and set a key:
+      <code>pip install "ace-playbook[all]" &amp;&amp; export OPENAI_API_KEY=sk-...</code></p>
+    <div class="grid">
+      <div class="card">
+        <div class="num">RECIPE 08</div>
+        <h3><code>agent_quickstart</code></h3>
+        <p><code>wrap_agent</code> in one call: playbook injection on every run, <code>run_and_learn</code>, and <code>save()</code> for durable memory.</p>
+        <div class="foot"><span class="chip key">needs key</span>
+          <a class="src" href="https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/08_agent_quickstart.py">View source →</a></div>
+      </div>
+      <div class="card">
+        <div class="num">RECIPE 09</div>
+        <h3><code>auto_learn_from_tool_errors</code></h3>
+        <p>Capture hooks turn a failed tool call into an automatic learning signal — no explicit feedback required. Read <code>out.auto_signal</code> / <code>out.events</code>.</p>
+        <div class="foot"><span class="chip key">needs key</span>
+          <a class="src" href="https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/09_agent_auto_learn_from_tool_errors.py">View source →</a></div>
+      </div>
+      <div class="card">
+        <div class="num">RECIPE 10</div>
+        <h3><code>streaming_and_sessions</code></h3>
+        <p>Stream and learn with <code>arun_streamed_and_learn</code>, and compose ACE's learned memory with an SDK <code>session</code> for multi-turn history.</p>
+        <div class="foot"><span class="chip key">needs key</span>
+          <a class="src" href="https://github.com/rrahimi-uci/agentic-context-engineering/blob/main/cookbook/10_agent_streaming_and_sessions.py">View source →</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Suggested learning path</h2>
+    <p class="sub">Start with the regimes, then your data, then operations, then agents.</p>
+<pre class="path">01 first_playbook ─► 02 online_adaptation ─► 03 your_own_task ─► 04 label_free_feedback
+        │                                                              │
+        ▼                                                              ▼
+05 save_and_resume ─► 06 grow_and_refine ─► 07 inspect_and_report      │
+                                                                       ▼
+                              08 agent_quickstart ─► 09 auto_learn ─► 10 streaming/sessions</pre>
+    <p style="text-align:center;margin-top:24px">
+      <a class="btn primary" href="https://github.com/rrahimi-uci/agentic-context-engineering/tree/main/cookbook">Browse all recipes on GitHub</a>
+      <a class="btn ghost" href="index.html">← Back to home</a>
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><strong>ACE — Agentic Context Engineering.</strong> MIT licensed · independent open-source implementation.</p>
+    <p><a href="index.html">Home</a> ·
+       <a href="architecture.html">Architecture</a> ·
+       <a href="https://github.com/rrahimi-uci/agentic-context-engineering">GitHub</a> ·
+       <a href="https://arxiv.org/abs/2510.04618">Paper (arXiv:2510.04618)</a></p>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -30,7 +30,13 @@ htmlcov/
 # Generated artifacts
 ace_report.html
 report.html
+cookbook_report.html
 *.local.html
+support_memory.json
+
+# Allure test reporting
+allure-results/
+allure-report/
 
 # Large local data / prior scratch (not part of the library)
 med_prompt_sbi.json

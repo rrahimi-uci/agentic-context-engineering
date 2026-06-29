@@ -30,9 +30,12 @@ dependencies = [
 
 [project.optional-dependencies]
 openai = ["openai>=1.40"]
-agents = ["openai-agents>=0.0.1"]
-dev = ["pytest>=8.0", "python-dotenv>=1.0"]
-all = ["openai>=1.40", "openai-agents>=0.0.1", "python-dotenv>=1.0", "pytest>=8.0"]
+# The Agents SDK is a fast-moving 0.x with breaking changes between minors;
+# pin a realistic floor (tested against 0.17.x) and cap below the 1.0 boundary.
+# Note: the Agents SDK itself requires Python >= 3.10 (the ACE core supports 3.9+).
+agents = ["openai-agents>=0.1,<1.0"]
+dev = ["pytest>=8.0", "python-dotenv>=1.0", "allure-pytest>=2.13"]
+all = ["openai>=1.40", "openai-agents>=0.1,<1.0", "python-dotenv>=1.0", "pytest>=8.0", "allure-pytest>=2.13"]
 
 [project.urls]
 Homepage = "https://github.com/rrahimi-uci/agentic-context-engineering"

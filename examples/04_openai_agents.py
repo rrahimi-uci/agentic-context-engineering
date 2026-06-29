@@ -5,7 +5,8 @@ Requires a real OpenAI API key (set OPENAI_API_KEY) and the extras:
 
 The agent runs normally; after each task we feed natural execution feedback
 (no labels required) to ACE, which grows a playbook that is injected into the
-agent's instructions on subsequent runs.
+agent's instructions on subsequent runs. The playbook is persisted to disk, so
+re-running this script starts from what the agent already learned.
 
 Run:  OPENAI_API_KEY=sk-... python examples/04_openai_agents.py
 """
@@ -21,8 +22,7 @@ def main() -> int:
 
     from agents import Agent, function_tool
 
-    from ace import ACE, ACEConfig, OpenAILLM
-    from ace.integrations.openai_agents import ACEAgent
+    from ace import wrap_agent  # one import — the crystal-clear entry point
 
     @function_tool
     def lookup_order(order_id: str) -> str:
@@ -36,9 +36,9 @@ def main() -> int:
         model="gpt-4o-mini",
     )
 
-    # ACE uses the same model family for Reflector/Curator.
-    llm = OpenAILLM(model="gpt-4o-mini")
-    agent = ACEAgent(base, ace=ACE(llm, ACEConfig(reflector_max_rounds=1)))
+    # wrap_agent builds the ACE engine (same model family for Reflector/Curator),
+    # loads support_memory.json if it exists, and persists what it learns.
+    agent = wrap_agent(base, model="gpt-4o-mini", playbook="support_memory.json")
 
     tasks = [
         ("Where is order #A17?", "Always call lookup_order before answering status questions."),
@@ -52,7 +52,9 @@ def main() -> int:
         print(f"\nQ: {q}\nA: {out.output}\n   (playbook now {out.record.playbook_size} bullets)")
 
     print("\n=== Learned playbook ===")
-    print(agent.ace.playbook.render())
+    print(agent.playbook.render())
+    path = agent.save()  # persists to support_memory.json
+    print(f"\nPlaybook saved to {path} — re-run to continue learning.")
     return 0
 
 

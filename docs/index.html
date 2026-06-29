@@ -106,7 +106,7 @@
     <div class="badge-row">
       <img alt="Python 3.9+" src="https://img.shields.io/badge/python-3.9%2B-blue.svg" />
       <img alt="License MIT" src="https://img.shields.io/badge/License-MIT-green.svg" />
-      <img alt="Tests" src="https://img.shields.io/badge/tests-62%20passing-brightgreen.svg" />
+      <img alt="Tests" src="https://img.shields.io/badge/tests-148%20passing-brightgreen.svg" />
       <img alt="OpenAI Agents SDK" src="https://img.shields.io/badge/OpenAI-Agents%20SDK-black.svg" />
       <img alt="Paper" src="https://img.shields.io/badge/paper-arXiv%3A2510.04618-b31b1b.svg" />
     </div>
@@ -120,6 +120,7 @@
     <div class="cta">
       <a class="btn primary" href="https://github.com/rrahimi-uci/agentic-context-engineering">⭐ Star on GitHub</a>
       <a class="btn ghost" href="#quickstart">Quickstart</a>
+      <a class="btn ghost" href="cookbook.html">📓 Cookbook</a>
       <a class="btn ghost" href="architecture.html">Architecture</a>
     </div>
   </div>
@@ -209,18 +210,22 @@ flowchart LR
 <section>
   <div class="wrap">
     <h2>Use it with the OpenAI Agents SDK</h2>
-    <p class="sub">ACE becomes a self-improving memory for any agent.</p>
+    <p class="sub">One call wraps any agent as a self-improving memory — playbook injection, learning, and persistence included.</p>
 <pre><code>from agents import Agent
-from ace import ACE, OpenAILLM
-from ace.integrations.openai_agents import ACEAgent
+from ace import wrap_agent                # one top-level import
 
-base  = Agent(name="Support", instructions="You are a concise support agent.")
-agent = ACEAgent(base, ace=ACE(OpenAILLM(model="gpt-4o-mini")))
+agent = wrap_agent(
+    Agent(name="Support", instructions="You are a concise support agent."),
+    model="gpt-4o-mini",
+    playbook="support_memory.json",       # loads if present; persists what it learns
+)
 
 out = agent.run_and_learn("Cancel order #C99",
                           signal="Policy: cancellation requires identity verification first.")
 print(out.output)
-print(agent.ace.playbook.render())   # the agent just wrote itself a rule</code></pre>
+print(agent.playbook.render())   # the agent just wrote itself a rule
+agent.save()                     # learned memory survives a restart</code></pre>
+    <p class="sub" style="margin-top:14px">Auto-learns from tool errors, captures rich trajectories via the SDK's typed run-items, traces the learning step, and supports streaming, async, and sessions. See the <a href="cookbook.html">Cookbook</a> for runnable recipes.</p>
     <div style="margin-top:20px">
       <span class="pill">self-improving agents</span>
       <span class="pill">context engineering</span>

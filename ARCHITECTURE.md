@@ -420,7 +420,12 @@ flowchart TD
 ## 13. OpenAI Agents SDK integration
 
 `ACEAgent` (`ace/integrations/openai_agents.py`) makes ACE a **drop-in
-self-improving memory** for any `agents.Agent`.
+self-improving memory** for any `agents.Agent`. The crystal-clear entry point is
+the one-call `wrap_agent(base_agent, model=..., playbook="mem.json")`, which
+builds the ACE engine, loads/persists the playbook, and returns a ready
+`ACEAgent`. Trajectories are captured via the SDK's typed run-items, tool errors
+become an automatic learning signal (`RunHooks`), the learn step emits an
+`ace.learn` tracing span, and streaming / async / sessions are all supported.
 
 ```mermaid
 sequenceDiagram
