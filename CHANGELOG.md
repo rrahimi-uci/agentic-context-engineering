@@ -6,6 +6,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-29
+
 ### Added
 - **Quality gates** — `ruff` (lint + format), `mypy` (backing `py.typed`), and
   `pytest-cov` (≥90% floor, currently ~95%), enforced by a new CI `quality` job
@@ -53,6 +55,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   backends, the `ace` CLI, a live terminal dashboard, and a self-contained HTML
   report. A faithful, dependency-light implementation of the ICLR 2026 paper.
 
-[Unreleased]: https://github.com/rrahimi-uci/agentic-context-engineering/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/rrahimi-uci/agentic-context-engineering/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/rrahimi-uci/agentic-context-engineering/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/rrahimi-uci/agentic-context-engineering/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rrahimi-uci/agentic-context-engineering/releases/tag/v0.1.0
