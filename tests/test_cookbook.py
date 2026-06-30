@@ -66,6 +66,7 @@ def test_cookbook_directory_exists():
         "05_save_and_resume.py",
         "06_grow_and_refine.py",
         "07_inspect_and_report.py",
+        "11_extract_10k_to_csv.py",
         "08_agent_quickstart.py",
         "09_agent_auto_learn_from_tool_errors.py",
         "10_agent_streaming_and_sessions.py",
@@ -147,6 +148,26 @@ def test_07_inspect_and_report_writes_html(tmp_path):
     assert r["report_is_html"]
     assert r["report_bytes"] > 500
     assert pathlib.Path(path).exists()
+
+
+@_feature("Cookbook — core")
+@_story("11 extract 10-K to CSV")
+def test_11_extract_10k_to_csv(tmp_path):
+    import csv as _csv
+
+    path = str(tmp_path / "extractions.csv")
+    r = _load("11_extract_10k_to_csv.py").run(csv_path=path)
+    # ACE learns extraction rules and lifts accuracy on a held-out filing.
+    assert r["playbook_bullets"] >= 1
+    assert r["ace_accuracy"] >= r["base_accuracy"]
+    assert r["ace_accuracy"] > 50.0
+    # The CSV is written with one row per extracted field.
+    assert r["rows_written"] >= 1
+    assert pathlib.Path(path).exists()
+    with open(path, encoding="utf-8") as f:
+        rows = list(_csv.reader(f))
+    assert rows[0] == r["csv_header"]
+    assert len(rows) - 1 == r["rows_written"]
 
 
 # --------------------------------------------------------------------------- #
