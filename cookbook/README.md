@@ -26,6 +26,7 @@ covered by [`tests/test_cookbook.py`](../tests/test_cookbook.py).
 | 05 | [`05_save_and_resume.py`](05_save_and_resume.py) | Persisting a playbook to JSON and warm-starting a fresh engine from it. |
 | 06 | [`06_grow_and_refine.py`](06_grow_and_refine.py) | De-duplicating and pruning a playbook with `grow_and_refine` — keeping it compact. |
 | 07 | [`07_inspect_and_report.py`](07_inspect_and_report.py) | Introspecting bullets/stats and rendering a shareable **HTML report**. |
+| 11 | [`11_extract_10k_to_csv.py`](11_extract_10k_to_csv.py) | An end-to-end **10-K extraction agent**: learn field-extraction rules from two filings, apply them to a held-out company's 10-K, and **port the results to CSV**. |
 
 ## 🔌 OpenAI Agents SDK recipes (API key)
 

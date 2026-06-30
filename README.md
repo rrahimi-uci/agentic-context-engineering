@@ -6,7 +6,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-161%20passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-163%20passing-brightgreen.svg)](tests/)
 [![OpenAI Agents SDK](https://img.shields.io/badge/OpenAI-Agents%20SDK-black.svg)](https://openai.github.io/openai-agents-python/)
 [![Docs](https://img.shields.io/badge/docs-website-blue.svg)](https://rrahimi-uci.github.io/agentic-context-engineering/)
 [![Paper](https://img.shields.io/badge/paper-arXiv%3A2510.04618-b31b1b.svg)](https://arxiv.org/abs/2510.04618)
@@ -291,9 +291,9 @@ ace/
 ├── integrations/
 │   └── openai_agents.py   # wrap_agent / ACEAgent: drop-in self-improving memory
 └── cli.py           # `ace demo | run | playbook | version`
-cookbook/            # 10 guided recipes (7 need no API key) + tests
+cookbook/            # 11 guided recipes (8 need no API key) + tests
 examples/            # 5 runnable demos (4 need no API key)
-tests/               # 161 tests, run in <1s, zero network
+tests/               # 163 tests, run in <1s, zero network
 ```
 
 ---
@@ -302,7 +302,7 @@ tests/               # 161 tests, run in <1s, zero network
 
 ```bash
 pip install -e ".[dev]"
-pytest                       # 161 tests, fully offline, ~1s
+pytest                       # 163 tests, fully offline, ~1s
 python examples/01_quickstart.py
 python examples/02_context_collapse.py   # writes ace_report.html
 ```
