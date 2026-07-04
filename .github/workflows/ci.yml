@@ -88,14 +88,14 @@ jobs:
           allure generate allure-results --clean -o allure-report
       - name: Upload Allure results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: allure-results
           path: allure-results
           if-no-files-found: warn
       - name: Upload Allure HTML report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: allure-report
           path: allure-report
