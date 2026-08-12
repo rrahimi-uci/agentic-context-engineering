@@ -15,6 +15,9 @@
 
 📖 **[Documentation site](https://rrahimi-uci.github.io/agentic-context-engineering/)** · 📐 **[Architecture](https://rrahimi-uci.github.io/agentic-context-engineering/architecture.html)**
 
+**Release:** `ace-v0.0.1` — a reproducible, offline-first ACE snapshot with 163 tests,
+11 cookbook recipes, and first-class OpenAI Agents SDK support.
+
 [Quickstart](#-quickstart) · [Why ACE](#-why-ace) · [Cookbook](cookbook/README.md) · [Use on your own task](#-use-it-on-your-own-task) · [OpenAI Agents SDK](#-use-it-with-the-openai-agents-sdk) · [How it works](#-how-it-works) · [Results](#-results) · [Architecture](ARCHITECTURE.md)
 
 </div>
