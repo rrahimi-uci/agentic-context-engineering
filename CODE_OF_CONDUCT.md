@@ -22,7 +22,7 @@ Examples of unacceptable behavior:
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the project maintainers responsible for enforcement. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported via GitHub's private vulnerability reporting (**Security → Report a vulnerability**) or by contacting a project maintainer directly through GitHub. All complaints will be reviewed and investigated promptly and fairly.
 
 ## Attribution
 

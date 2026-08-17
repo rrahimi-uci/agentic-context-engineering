@@ -4,7 +4,7 @@
 
 **Please do not open a public issue for security vulnerabilities.**
 
-Instead, use GitHub's private vulnerability reporting (Security → *Report a vulnerability*) or email the maintainers privately. Include:
+Use GitHub's private vulnerability reporting: **Security → Report a vulnerability** on this repository. Include:
 
 - a description of the issue and its impact,
 - steps to reproduce (a minimal proof of concept if possible),
