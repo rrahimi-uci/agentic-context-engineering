@@ -91,6 +91,7 @@ def run() -> dict:
     """The recipe's logic. Returns the results so tests can assert on them."""
     ...
 
+
 def main() -> int:
     """Pretty-prints run() and returns an exit code. Used when run as a script."""
     ...
